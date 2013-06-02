@@ -44,7 +44,7 @@ This is still an alpha version. Use with care.
 
 ### Initialize
 
-```
+```javascript
 RedisSMQ = require("rsmq");
 // Initialize RedisSMQ(redisport, redishost, namespaceprefix)
 rsmq = new RedisSMQ(6379,"127.0.0.1","rsmq");
@@ -54,7 +54,7 @@ rsmq = new RedisSMQ(6379,"127.0.0.1","rsmq");
 
 Please look at the *Methods* section for optional parameters when creating a queue.
 
-```
+```javascript
 rsmq.createQueue({qname:"myqueue"}, function (err, resp) {
 		if (resp===1) {
 			console.log("queue created")
@@ -67,7 +67,7 @@ rsmq.createQueue({qname:"myqueue"}, function (err, resp) {
 ### Send a message
 
 
-```
+```javascript
 rsmq.sendMessage({qname:"myqueue", message:"Hello World"}, function (err, resp) {
 	if (resp) {
 		console.log("Message sent. ID:", resp);
@@ -79,7 +79,7 @@ rsmq.sendMessage({qname:"myqueue", message:"Hello World"}, function (err, resp) 
 ### Receive a message
 
 
-```
+```javascript
 rsmq.receiveMessage({qname:"myqueue"}, function (err, resp) {
 	if (resp.id) {
 		console.log("Message received.", resp)	
@@ -93,7 +93,7 @@ rsmq.receiveMessage({qname:"myqueue"}, function (err, resp) {
 ### Delete a message
 
 
-```
+```javascript
 rsmq.deleteMessage({qname:"myqueue", id:"dhoiwpiirm15ce77305a5c3a3b0f230c6e20f09b55"}, function (err, resp) {
 	if (resp===1) {
 		console.log("Message deleted.")	
