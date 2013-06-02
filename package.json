@@ -1,7 +1,7 @@
 {
-    "name": "redis-simple-message-queue",
+    "name": "rsmq",
     "description": "A really simple message queue based on Redis",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "author": "P. Liess <smrchy+npm@gmail.com>",
     "engines": {
 		"node": "> 0.8.10"
@@ -26,7 +26,7 @@
 	],
 	"repository" : {
 		"type": "git",
-		"url": "http://github.com/smrchy/redis-simple-message-queue.git"
+		"url": "http://github.com/smrchy/rsmq.git"
 	}
 
 }

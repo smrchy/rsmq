@@ -119,7 +119,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		it 'Create a new queue: queue1', (done) ->
 			rsmq.createQueue {qname:queue1}, (err, resp) ->
 				should.not.exist(err)
-				resp.should.equal(true)
+				resp.should.equal(1)
 				done()
 				return
 			return
@@ -135,7 +135,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		it 'Create a new queue: queue2', (done) ->
 			rsmq.createQueue {qname:queue2}, (err, resp) ->
 				should.not.exist(err)
-				resp.should.equal(true)
+				resp.should.equal(1)
 				done()
 				return
 			return

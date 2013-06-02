@@ -155,7 +155,7 @@
           qname: queue1
         }, function(err, resp) {
           should.not.exist(err);
-          resp.should.equal(true);
+          resp.should.equal(1);
           done();
         });
       });
@@ -173,7 +173,7 @@
           qname: queue2
         }, function(err, resp) {
           should.not.exist(err);
-          resp.should.equal(true);
+          resp.should.equal(1);
           done();
         });
       });

@@ -2,6 +2,8 @@
 
 A really simple message queue based on Redis
 
+[![Build Status](https://secure.travis-ci.org/smrchy/rsmq.png?branch=master)](http://travis-ci.org/smrchy/rsmq)
+
 ## Alpha version. 
 
 This is still an alpha version. Use with care.
@@ -37,11 +39,64 @@ This is still an alpha version. Use with care.
 ### Initialize
 
 ```
-RedisSMQ = require "../index" 
+RedisSMQ = require("rsmq");
+// Initialize RedisSMQ(redisport, redishost, namespaceprefix)
+rsmq = new RedisSMQ(6379,"127.0.0.1","rsmq");
+```
+
+### Create a queue
+
+Please look at the *Methods* section for optional parameters when creating a queue.
+
+```
+rsmq.createQueue({qname:"myqueue"}, function (err, resp) {
+		if (resp===1) {
+			console.log("queue created")
+		}
+});
 
 ```
 
 
+### Send a message
+
+
+```
+rsmq.sendMessage({qname:"myqueue", message:"Hello World"}, function (err, resp) {
+	if (resp) {
+		console.log("Message sent. ID:", resp);
+	}
+});
+```
+
+
+### Receive a message
+
+
+```
+rsmq.receiveMessage({qname:"myqueue"}, function (err, resp) {
+	if (resp.id) {
+		console.log("Message received.", resp)	
+	}
+	else {
+		console.log("No messages for me...")
+	}
+});
+```
+
+### Delete a message
+
+
+```
+rsmq.deleteMessage({qname:"myqueue", id:"dhoiwpiirm15ce77305a5c3a3b0f230c6e20f09b55"}, function (err, resp) {
+	if (resp===1) {
+		console.log("Message deleted.")	
+	}
+	else {
+		console.log("Message not found.")
+	}
+});
+```
 
   
 ## Methods
@@ -60,7 +115,7 @@ Parameters:
 
 Returns:
 
-* `true`
+* `1`
 
 Errors:
 

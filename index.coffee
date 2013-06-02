@@ -1,5 +1,7 @@
 ###
-Redis Simple Message Queue
+rsmq
+
+A Really Simple Message Queue based on Redis
 
 The MIT License (MIT)
 
@@ -99,7 +101,7 @@ class RedisSMQ
 				if err
 					cb(err)
 					return
-				cb(null, true)
+				cb(null, 1)
 				return
 			return
 		return
