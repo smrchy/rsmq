@@ -1,4 +1,4 @@
-# redis-simple-message-queue
+# rsmq
 
 A really simple message queue based on Redis
 
@@ -27,17 +27,17 @@ This is still an alpha version. Use with care.
 ## Usage
 
 * After creating a queue you can send messages to that queue.
-* The messages will be handled in a FIFO (first in first out) manner unless specified differently with a delay.
+* The messages will be handled in a **FIFO** (first in first out) manner unless specified differently with a delay.
 * Every message has a unique `id` that you can use to delete the message. 
-* The `sendMessage` method will return an `id` for a sent message.
-* The `receiveMessage` method will return an `id` along with the message.
+* The `sendMessage` method will return the `id` for a sent message.
+* The `receiveMessage` method will return an `id` along with the message and some stats.
 * Should you not delete the message it will be eligible to be received again after the visibility timeout is reached.
+* Please have a look at the `createQueue` and `receiveMessage` methods described below for optional parameters like **visibility timeout** and **delay**.
 
 
 ## Installation
 
 `npm install rsmq`
-
 
 
 ## Example
