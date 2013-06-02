@@ -34,7 +34,13 @@ This is still an alpha version. Use with care.
 * Should you not delete the message it will be eligible to be received again after the visibility timeout is reached.
 
 
-## Examples
+## Installation
+
+`npm install rsmq`
+
+
+
+## Example
 
 ### Initialize
 
