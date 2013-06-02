@@ -1,0 +1,32 @@
+{
+    "name": "redis-simple-message-queue",
+    "description": "A really simple message queue based on Redis",
+    "version": "0.1.0",
+    "author": "P. Liess <smrchy+npm@gmail.com>",
+    "engines": {
+		"node": "> 0.8.10"
+	},
+	"scripts": {
+		"test": "mocha ./test/test.js"
+	},
+	"dependencies": {
+		"hiredis": "*",
+		"redis": "*",
+		"underscore": "= 1.4.4"
+	},
+	"devDependencies": {
+		"mocha": "*",
+		"should": "*",
+		"async": "*"
+	},
+	"keywords": [
+		"queue",
+		"messagequeue",
+		"redis"
+	],
+	"repository" : {
+		"type": "git",
+		"url": "http://github.com/smrchy/redis-simple-message-queue.git"
+	}
+
+}
