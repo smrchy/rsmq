@@ -115,7 +115,7 @@ The time when the message will be visible again is calculated from the current t
 
 Parameters:
 
-* `qname` (String): The Queue name. Maximum 80 characters; alphanumeric characters, hyphens (-), and underscores (_) are allowed.
+* `qname` (String): The Queue name.
 * `id` (String): The message id.
 * `vt` (Number): The length of time, in seconds, that this message will not be visible. Allowed values: 0-86400
 

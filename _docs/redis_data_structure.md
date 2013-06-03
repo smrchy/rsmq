@@ -13,7 +13,7 @@ This hash keeps all data for a single queue.
 
 **FIELDS** 
 * `{msgid}`: The message
-* `{msgid}:rc}`: The receive counter for a single message. Will be incremented on each receive.
+* `{msgid}:rc`: The receive counter for a single message. Will be incremented on each receive.
 * `{msgid}:fr`: The timestamp when this message was received for the first time. Will be created on the first receive.
 * `totalsent`: The total number of messages sent to this queue.
 * `totalrecv`: The total number of messages received from this queue.
