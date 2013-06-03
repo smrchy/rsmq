@@ -108,6 +108,26 @@ rsmq.deleteMessage({qname:"myqueue", id:"dhoiwpiirm15ce77305a5c3a3b0f230c6e20f09
 ## Methods
 
 
+### changeMessageVisibility
+
+Change the visibility timer of a single message.
+The time when the message will be visible again is calculated from the current time (now) + `vt`.
+
+Parameters:
+
+* `qname` (String): The Queue name. Maximum 80 characters; alphanumeric characters, hyphens (-), and underscores (_) are allowed.
+* `id` (String): The message id.
+* `vt` (Number): The length of time, in seconds, that this message will not be visible. Allowed values: 0-86400
+
+Returns: 
+
+* `1` if successful, `0` if the message was not found.
+
+Errors:
+
+* `"Queue not found"`
+
+
 ### createQueue
 
 Create a new queue.
@@ -213,10 +233,6 @@ Error:
 
 
 ## Not implemented yet
-
-### changeMessageVisibility
-
-Change the `VisibilityTimeout` of a single message.
 
 ### getQueueAttributes
 

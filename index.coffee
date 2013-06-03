@@ -74,6 +74,28 @@ class RedisSMQ
 
 		return
 
+	# This must be done via LUA script
+	# 
+	# We can only set a visibility of a message if it really exists.
+	#
+	changeMessageVisibility: (options, cb) =>
+		if @_validate(options, ["qname","id","vt"],cb) is false
+			return
+
+		@_getQueue options.qname, false, (err, q) =>
+			if err
+				cb(err)
+				return
+
+			@redis.evalsha @changeMessageVisibility_sha1, 3, "#{@redisns}#{options.qname}", options.id, q.ts + options.vt * 1000, (err, resp) ->
+				if err
+					cb(err)
+					return
+				cb(null, resp)
+				return
+		return
+
+
 	createQueue: (options, cb) =>
 		options.vt 		= options.vt ? 30
 		options.delay	= options.delay ? 0
@@ -150,8 +172,14 @@ class RedisSMQ
 		return
 
 	initScript: (cb) ->
-		# The LUA Script
+		# The receiveMessage LUA Script
 		# 
+		# Parameters:
+		#
+		# KEYS[1]: the zset key
+		# KEYS[2]: the current time in ms
+		# KEYS[3]: the new calculated time when the vt runs out
+		#
 		# * Find a message id
 		# * Get the message
 		# * Increase the rc (receive count)
@@ -162,7 +190,7 @@ class RedisSMQ
 		# 
 		# {id, message, rc, fr}
 
-		script = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")
+		script_receiveMessage = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")
 			if #msg == 0 then
 				return {}
 			end
@@ -178,15 +206,41 @@ class RedisSMQ
 				local fr = redis.call("HGET", KEYS[1] .. ":Q", msg[1] .. ":fr")
 				table.insert(o, fr)
 			end
-			return o'
-		@redis.script "load", script, (err, resp) =>
-			@scriptsha1 = resp
+			return o'	
+
+		# The changeMessageVisibility LUA Script
+		# 
+		# Parameters:
+		#
+		# KEYS[1]: the zset key
+		# KEYS[2]: the message id
+		#
+		#
+		# * Find the message id
+		# * Set the new timer
+		#
+		# Returns:
+		# 
+		# 0 or 1
+
+		script_changeMessageVisibility = 'local msg = redis.call("ZSCORE", KEYS[1], KEYS[2])
+			if not msg then
+				return 0
+			end
+			redis.call("ZADD", KEYS[1], KEYS[3], KEYS[2])
+			return 1'
+
+		@redis.script "load", script_receiveMessage, (err, resp) =>
+			@receiveMessage_sha1 = resp
+			return
+		@redis.script "load", script_changeMessageVisibility, (err, resp) =>
+			@changeMessageVisibility_sha1 = resp
 			return
 		return
 
 	receiveMessage: (options, cb) =>
-		# Make sure the @scriptsha1 is there
-		if not @scriptsha1
+		# Make sure the @receiveMessage_sha1 is there
+		if not @receiveMessage_sha1
 			return {}
 
 		if @_validate(options, ["qname"],cb) is false
@@ -205,7 +259,7 @@ class RedisSMQ
 
 
 
-			@redis.evalsha @scriptsha1, 3, "#{@redisns}#{options.qname}", q.ts, q.ts + options.vt * 1000, (err, resp) ->
+			@redis.evalsha @receiveMessage_sha1, 3, "#{@redisns}#{options.qname}", q.ts, q.ts + options.vt * 1000, (err, resp) ->
 				if err
 					cb(err)
 					return

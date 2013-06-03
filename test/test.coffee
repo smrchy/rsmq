@@ -186,7 +186,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 			return
 
 		# Send 1000 msgs to q2 so we can delay sending of msg 2 to q1
-
+		
 		it 'Send 1000 messages to queue2: succeed', (done) ->
 			pq = []
 			for i in [0...1000]
@@ -199,8 +199,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
-
-
+		
 		it 'Send message 2', (done) ->
 			rsmq.sendMessage {qname:queue1, message:"World"}, (err, resp) ->
 				should.not.exist(err)
@@ -226,6 +225,41 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				return
 			return
 
+
+		it 'Should fail. Set the visibility of a non existing message', (done) ->
+			rsmq.changeMessageVisibility {qname:queue1, id:"abcdefghij0123456789abcdefghij0123456789ab", vt:10}, (err, resp) ->
+				resp.should.equal(0)
+				done()
+				return
+			return
+
+		it 'Set new visibility timeout of message 2 to 10s', (done) ->
+			rsmq.changeMessageVisibility {qname:queue1, id:q1m2.id, vt:	10}, (err, resp) ->
+				resp.should.equal(1)
+				done()
+				return
+			return
+
+		it 'Receive a message. Should return nothing', (done) ->
+			rsmq.receiveMessage {qname:queue1}, (err, resp) ->
+				should.not.exist(resp.id)
+				done()
+				return
+			return
+
+		it 'Set new visibility timeout of message 2 to 0s', (done) ->
+			rsmq.changeMessageVisibility {qname:queue1, id:q1m2.id, vt:	0}, (err, resp) ->
+				resp.should.equal(1)
+				done()
+				return
+			return
+
+		it 'Receive a message. Should return message 2', (done) ->
+			rsmq.receiveMessage {qname:queue1}, (err, resp) ->
+				resp.id.should.equal(q1m2.id)
+				done()
+				return
+			return
 
 		it 'Receive a message. Should return nothing', (done) ->
 			rsmq.receiveMessage {qname:queue1}, (err, resp) ->
@@ -262,6 +296,13 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				return
 			return
 
+		it 'Set new visibility timeout of message 1. Should return 0.', (done) ->
+			rsmq.changeMessageVisibility {qname:queue1, id:q1m1.id, vt:	10}, (err, resp) ->
+				resp.should.equal(0)
+				done()
+				return
+			return
+
 		it 'Should fail: Send a message that is too long', (done) ->
 			text = JSON.stringify([0..15000])
 			rsmq.sendMessage {qname:queue1, message:text}, (err, resp) ->
@@ -270,7 +311,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
-
+		
 		it 'Receive 1000 messages from queue2 and delete 500 (those where number is even)', (done) ->
 			pq = []
 			# we keep vt = 0 so we can query them again quickly
@@ -310,7 +351,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 					return
 				return
 			return
-
+		
 		it 'Receive a message from queue2. Should return {}', (done) ->
 			rsmq.receiveMessage {qname:queue2}, (err, resp) ->
 				should.not.exist(resp.id)

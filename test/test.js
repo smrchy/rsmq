@@ -280,6 +280,52 @@
           done();
         });
       });
+      it('Should fail. Set the visibility of a non existing message', function(done) {
+        rsmq.changeMessageVisibility({
+          qname: queue1,
+          id: "abcdefghij0123456789abcdefghij0123456789ab",
+          vt: 10
+        }, function(err, resp) {
+          resp.should.equal(0);
+          done();
+        });
+      });
+      it('Set new visibility timeout of message 2 to 10s', function(done) {
+        rsmq.changeMessageVisibility({
+          qname: queue1,
+          id: q1m2.id,
+          vt: 10
+        }, function(err, resp) {
+          resp.should.equal(1);
+          done();
+        });
+      });
+      it('Receive a message. Should return nothing', function(done) {
+        rsmq.receiveMessage({
+          qname: queue1
+        }, function(err, resp) {
+          should.not.exist(resp.id);
+          done();
+        });
+      });
+      it('Set new visibility timeout of message 2 to 0s', function(done) {
+        rsmq.changeMessageVisibility({
+          qname: queue1,
+          id: q1m2.id,
+          vt: 0
+        }, function(err, resp) {
+          resp.should.equal(1);
+          done();
+        });
+      });
+      it('Receive a message. Should return message 2', function(done) {
+        rsmq.receiveMessage({
+          qname: queue1
+        }, function(err, resp) {
+          resp.id.should.equal(q1m2.id);
+          done();
+        });
+      });
       it('Receive a message. Should return nothing', function(done) {
         rsmq.receiveMessage({
           qname: queue1
@@ -318,6 +364,16 @@
         rsmq.deleteMessage({
           qname: queue1,
           id: q1m1.id
+        }, function(err, resp) {
+          resp.should.equal(0);
+          done();
+        });
+      });
+      it('Set new visibility timeout of message 1. Should return 0.', function(done) {
+        rsmq.changeMessageVisibility({
+          qname: queue1,
+          id: q1m1.id,
+          vt: 10
         }, function(err, resp) {
           resp.should.equal(0);
           done();

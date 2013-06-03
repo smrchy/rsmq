@@ -40,6 +40,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       this.deleteQueue = __bind(this.deleteQueue, this);
       this.deleteMessage = __bind(this.deleteMessage, this);
       this.createQueue = __bind(this.createQueue, this);
+      this.changeMessageVisibility = __bind(this.changeMessageVisibility, this);
       this._getQueue = __bind(this._getQueue, this);
       this.redisns = this.redisns + ":";
       this.redis = RedisInst.createClient(redisport, redishost);
@@ -76,6 +77,27 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           q.uid = Number(resp[1][0] + ms).toString(36) + uid;
         }
         cb(null, q);
+      });
+    };
+
+    RedisSMQ.prototype.changeMessageVisibility = function(options, cb) {
+      var _this = this;
+
+      if (this._validate(options, ["qname", "id", "vt"], cb) === false) {
+        return;
+      }
+      this._getQueue(options.qname, false, function(err, q) {
+        if (err) {
+          cb(err);
+          return;
+        }
+        return _this.redis.evalsha(_this.changeMessageVisibility_sha1, 3, "" + _this.redisns + options.qname, options.id, q.ts + options.vt * 1000, function(err, resp) {
+          if (err) {
+            cb(err);
+            return;
+          }
+          cb(null, resp);
+        });
       });
     };
 
@@ -152,10 +174,10 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
     };
 
     RedisSMQ.prototype.initScript = function(cb) {
-      var script,
+      var script_changeMessageVisibility, script_receiveMessage,
         _this = this;
 
-      script = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")\
+      script_receiveMessage = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")\
 			if #msg == 0 then\
 				return {}\
 			end\
@@ -172,15 +194,24 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 				table.insert(o, fr)\
 			end\
 			return o';
-      this.redis.script("load", script, function(err, resp) {
-        _this.scriptsha1 = resp;
+      script_changeMessageVisibility = 'local msg = redis.call("ZSCORE", KEYS[1], KEYS[2])\
+			if not msg then\
+				return 0\
+			end\
+			redis.call("ZADD", KEYS[1], KEYS[3], KEYS[2])\
+			return 1';
+      this.redis.script("load", script_receiveMessage, function(err, resp) {
+        _this.receiveMessage_sha1 = resp;
+      });
+      this.redis.script("load", script_changeMessageVisibility, function(err, resp) {
+        _this.changeMessageVisibility_sha1 = resp;
       });
     };
 
     RedisSMQ.prototype.receiveMessage = function(options, cb) {
       var _this = this;
 
-      if (!this.scriptsha1) {
+      if (!this.receiveMessage_sha1) {
         return {};
       }
       if (this._validate(options, ["qname"], cb) === false) {
@@ -197,7 +228,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
         if (_this._validate(options, ["vt"], cb) === false) {
           return;
         }
-        _this.redis.evalsha(_this.scriptsha1, 3, "" + _this.redisns + options.qname, q.ts, q.ts + options.vt * 1000, function(err, resp) {
+        _this.redis.evalsha(_this.receiveMessage_sha1, 3, "" + _this.redisns + options.qname, q.ts, q.ts + options.vt * 1000, function(err, resp) {
           var o;
 
           if (err) {
