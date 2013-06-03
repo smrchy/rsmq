@@ -212,7 +212,8 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       var _this = this;
 
       if (!this.receiveMessage_sha1) {
-        return {};
+        cb(null, {});
+        return;
       }
       if (this._validate(options, ["qname"], cb) === false) {
         return;

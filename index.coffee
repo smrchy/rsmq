@@ -241,7 +241,8 @@ class RedisSMQ
 	receiveMessage: (options, cb) =>
 		# Make sure the @receiveMessage_sha1 is there
 		if not @receiveMessage_sha1
-			return {}
+			cb(null, {})
+			return
 
 		if @_validate(options, ["qname"],cb) is false
 			return
