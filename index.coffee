@@ -345,8 +345,8 @@ class RedisSMQ
 						return false
 				when "vt", "delay"
 					o[item] = parseInt(o[item],10)
-					if _.isNaN(o[item]) or not _.isNumber(o[item]) or o[item] < 0 or o[item] > 86400
-						cb("#{item} must be between 0 and 86400")
+					if _.isNaN(o[item]) or not _.isNumber(o[item]) or o[item] < 0 or o[item] > 9999999
+						cb("#{item} must be between 0 and 9999999")
 						return false
 				when "maxsize"
 					o[item] = parseInt(o[item],10)

@@ -117,7 +117,7 @@ Parameters:
 
 * `qname` (String): The Queue name.
 * `id` (String): The message id.
-* `vt` (Number): The length of time, in seconds, that this message will not be visible. Allowed values: 0-86400
+* `vt` (Number): The length of time, in seconds, that this message will not be visible. Allowed values: 0-9999999 (around 115 days)
 
 Returns: 
 
@@ -135,8 +135,8 @@ Create a new queue.
 Parameters:
 
 * `qname` (String): The Queue name. Maximum 80 characters; alphanumeric characters, hyphens (-), and underscores (_) are allowed.
-* `vt` (Number): *optional* *(Default: 30)* The length of time, in seconds, that a message received from a queue will be invisible to other receiving components when they ask to receive messages. Allowed values: 0-86400
-* `delay` (Number): *optional* *(Default: 0)* The time in seconds that the delivery of all new messages in the queue will be delayed. Allowed values: 0-86400
+* `vt` (Number): *optional* *(Default: 30)* The length of time, in seconds, that a message received from a queue will be invisible to other receiving components when they ask to receive messages. Allowed values: 0-9999999 (around 115 days)
+* `delay` (Number): *optional* *(Default: 0)* The time in seconds that the delivery of all new messages in the queue will be delayed. Allowed values: 0-9999999 (around 115 days)
 * `maxsize` (Number): *optional* *(Default: 65536)* The maximum message size in bytes. Allowed values: 1024-65536
 
 Returns:
@@ -193,7 +193,7 @@ Receive the next message from the queue.
 Parameters:
 
 * `qname` (String): The Queue name.
-* `vt` (Number): *optional* *(Default: queue settings)* The length of time, in seconds, that the received message will be invisible to others. Allowed values: 0-86400
+* `vt` (Number): *optional* *(Default: queue settings)* The length of time, in seconds, that the received message will be invisible to others. Allowed values: 0-9999999 (around 115 days)
 
 Returns:
 
@@ -219,7 +219,7 @@ Parameters:
 
 * `qname` (String)
 * `message` (String)
-* `delay` (Number): *optional* *(Default: queue settings)* The time in seconds that the delivery of the message will be delayed. Allowed values: 0-2592000 (30 days)
+* `delay` (Number): *optional* *(Default: queue settings)* The time in seconds that the delivery of the message will be delayed. Allowed values: 0-9999999 (around 115 days)
 
 Returns:
 

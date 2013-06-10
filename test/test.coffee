@@ -48,42 +48,42 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		it 'Should fail: Create a new queue with negative vt', (done) ->
 			rsmq.createQueue {qname:queue1, vt: -20}, (err, resp) ->
 				should.exist(err)
-				err.should.equal("vt must be between 0 and 86400")
+				err.should.equal("vt must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with non numeric vt', (done) ->
 			rsmq.createQueue {qname:queue1, vt: "not_a_number"}, (err, resp) ->
 				should.exist(err)
-				err.should.equal("vt must be between 0 and 86400")
+				err.should.equal("vt must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with vt too high', (done) ->
-			rsmq.createQueue {qname:queue1, vt: 87000}, (err, resp) ->
+			rsmq.createQueue {qname:queue1, vt: 10000000}, (err, resp) ->
 				should.exist(err)
-				err.should.equal("vt must be between 0 and 86400")
+				err.should.equal("vt must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with negative delay', (done) ->
 			rsmq.createQueue {qname:queue1, delay: -20}, (err, resp) ->
 				should.exist(err)
-				err.should.equal("delay must be between 0 and 86400")
+				err.should.equal("delay must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with non numeric delay', (done) ->
 			rsmq.createQueue {qname:queue1, delay: "not_a_number"}, (err, resp) ->
 				should.exist(err)
-				err.should.equal("delay must be between 0 and 86400")
+				err.should.equal("delay must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with delay too high', (done) ->
-			rsmq.createQueue {qname:queue1, delay: 87000}, (err, resp) ->
+			rsmq.createQueue {qname:queue1, delay: 10000000}, (err, resp) ->
 				should.exist(err)
-				err.should.equal("delay must be between 0 and 86400")
+				err.should.equal("delay must be between 0 and 9999999")
 				done()
 				return
 			return

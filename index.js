@@ -318,8 +318,8 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           case "vt":
           case "delay":
             o[item] = parseInt(o[item], 10);
-            if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 0 || o[item] > 86400) {
-              cb("" + item + " must be between 0 and 86400");
+            if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 0 || o[item] > 9999999) {
+              cb("" + item + " must be between 0 and 9999999");
               return false;
             }
             break;
