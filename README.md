@@ -21,7 +21,7 @@ This is still an alpha version. Use with care.
   * No MessageRetentionPeriod: Messages stay in the queue unless deleted.
   * No bulk operations (SendMessageBatch, DeleteMessageBatch)
   * Some AWS specific features are missing
-  
+* Optional RESTful interface via [rest-rsmq](https://github.com/smrchy/rest-rsmq)  
   
   
 ## Usage
