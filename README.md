@@ -188,6 +188,8 @@ Errors:
 
 ### receiveMessage
 
+Receive the next message from the queue.
+
 Parameters:
 
 * `qname` (String): The Queue name.
@@ -211,7 +213,7 @@ Errors:
 
 ### sendMessage
 
-Sends a new message
+Sends a new message.
 
 Parameters:
 
