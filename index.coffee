@@ -201,6 +201,10 @@ class RedisSMQ
 					@_handleError(cb, err)
 					return
 
+				if resp[0][0] is null
+					@_handleError(cb, "queueNotFound")
+					return
+
 				o =
 					vt: parseInt(resp[0][0], 10)
 					delay: parseInt(resp[0][1], 10)

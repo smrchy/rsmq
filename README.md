@@ -186,7 +186,7 @@ Returns an object:
 * `created`: Timestamp (epoch in seconds) when the queue was created
 * `modified`: Timestamp (epoch in seconds) when the queue was last modified with `setQueueAttributes`
 * `msgs`: Current number of messages in the queue
-* `hiddenmsgs`: Current number of hidden / not visible messages. A message can hidden while "in flight" due to a `vt` parameter or when sent with a `delay`.	
+* `hiddenmsgs`: Current number of hidden / not visible messages. A message can hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
 
 
 

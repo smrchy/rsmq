@@ -36,7 +36,6 @@
         rsmq.createQueue({
           qname: "should throw"
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("Invalid qname format");
           done();
         });
@@ -45,7 +44,6 @@
         rsmq.createQueue({
           qname: "name01234567890123456789012345678901234567890123456789012345678901234567890123456789"
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("Invalid qname format");
           done();
         });
@@ -55,7 +53,6 @@
           qname: queue1,
           vt: -20
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("vt must be between 0 and 9999999");
           done();
         });
@@ -65,7 +62,6 @@
           qname: queue1,
           vt: "not_a_number"
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("vt must be between 0 and 9999999");
           done();
         });
@@ -75,7 +71,6 @@
           qname: queue1,
           vt: 10000000
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("vt must be between 0 and 9999999");
           done();
         });
@@ -85,7 +80,6 @@
           qname: queue1,
           delay: -20
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("delay must be between 0 and 9999999");
           done();
         });
@@ -95,7 +89,6 @@
           qname: queue1,
           delay: "not_a_number"
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("delay must be between 0 and 9999999");
           done();
         });
@@ -105,7 +98,6 @@
           qname: queue1,
           delay: 10000000
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("delay must be between 0 and 9999999");
           done();
         });
@@ -115,7 +107,6 @@
           qname: queue1,
           maxsize: -20
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("maxsize must be between 1024 and 65536");
           done();
         });
@@ -125,7 +116,6 @@
           qname: queue1,
           maxsize: "not_a_number"
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("maxsize must be between 1024 and 65536");
           done();
         });
@@ -135,7 +125,6 @@
           qname: queue1,
           maxsize: 66000
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("maxsize must be between 1024 and 65536");
           done();
         });
@@ -145,7 +134,6 @@
           qname: queue1,
           maxsize: 900
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("maxsize must be between 1024 and 65536");
           done();
         });
@@ -170,7 +158,6 @@
         rsmq.createQueue({
           qname: queue1
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("Queue exists");
           done();
         });
@@ -202,6 +189,14 @@
           done();
         });
       });
+      it('Should fail: GetQueueAttributes of bogus queue', function(done) {
+        rsmq.getQueueAttributes({
+          qname: "sdfsdfsdf"
+        }, function(err, resp) {
+          err.message.should.equal("Queue not found");
+          done();
+        });
+      });
     });
     describe('Messages', function() {
       it('Should fail: Send a message to non-existing queue', function(done) {
@@ -209,14 +204,12 @@
           qname: "rtlbrmpft",
           message: "foo"
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("Queue not found");
           done();
         });
       });
       it('Should fail: Send a message without any parameters', function(done) {
         rsmq.sendMessage({}, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("No qname supplied");
           done();
         });
@@ -226,7 +219,6 @@
           qname: queue1,
           messXage: "Hello"
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("Message must be a string");
           done();
         });
@@ -236,7 +228,6 @@
           qname: queue1,
           message: 123
         }, function(err, resp) {
-          should.exist(err);
           err.message.should.equal("Message must be a string");
           done();
         });

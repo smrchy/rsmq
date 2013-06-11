@@ -211,6 +211,10 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
             _this._handleError(cb, err);
             return;
           }
+          if (resp[0][0] === null) {
+            _this._handleError(cb, "queueNotFound");
+            return;
+          }
           o = {
             vt: parseInt(resp[0][0], 10),
             delay: parseInt(resp[0][1], 10),

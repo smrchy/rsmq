@@ -33,84 +33,72 @@ describe 'Redis-Simple-Message-Queue Test', ->
 	describe 'Queues', ->
 		it 'Should fail: Create a new queue with invalid characters in name', (done) ->
 			rsmq.createQueue {qname:"should throw"}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("Invalid qname format")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with name longer 80 chars', (done) ->
 			rsmq.createQueue {qname:"name01234567890123456789012345678901234567890123456789012345678901234567890123456789"}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("Invalid qname format")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with negative vt', (done) ->
 			rsmq.createQueue {qname:queue1, vt: -20}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("vt must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with non numeric vt', (done) ->
 			rsmq.createQueue {qname:queue1, vt: "not_a_number"}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("vt must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with vt too high', (done) ->
 			rsmq.createQueue {qname:queue1, vt: 10000000}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("vt must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with negative delay', (done) ->
 			rsmq.createQueue {qname:queue1, delay: -20}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("delay must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with non numeric delay', (done) ->
 			rsmq.createQueue {qname:queue1, delay: "not_a_number"}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("delay must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with delay too high', (done) ->
 			rsmq.createQueue {qname:queue1, delay: 10000000}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("delay must be between 0 and 9999999")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with negative maxsize', (done) ->
 			rsmq.createQueue {qname:queue1, maxsize: -20}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("maxsize must be between 1024 and 65536")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with non numeric maxsize', (done) ->
 			rsmq.createQueue {qname:queue1, maxsize: "not_a_number"}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("maxsize must be between 1024 and 65536")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with maxsize too high', (done) ->
 			rsmq.createQueue {qname:queue1, maxsize: 66000}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("maxsize must be between 1024 and 65536")
 				done()
 				return
 			return
 		it 'Should fail: Create a new queue with maxsize too low', (done) ->
 			rsmq.createQueue {qname:queue1, maxsize: 900}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("maxsize must be between 1024 and 65536")
 				done()
 				return
@@ -134,7 +122,6 @@ describe 'Redis-Simple-Message-Queue Test', ->
 
 		it 'Should fail: Create the same queue again', (done) ->
 			rsmq.createQueue {qname:queue1}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("Queue exists")
 				done()
 				return
@@ -170,33 +157,36 @@ describe 'Redis-Simple-Message-Queue Test', ->
 			return
 
 
+		it 'Should fail: GetQueueAttributes of bogus queue', (done) ->
+			rsmq.getQueueAttributes {qname:"sdfsdfsdf"}, (err, resp) ->
+				err.message.should.equal("Queue not found")
+				done()
+				return
+			return
+
 		return
 
 	describe 'Messages', ->
 		it 'Should fail: Send a message to non-existing queue', (done) ->
 			rsmq.sendMessage {qname:"rtlbrmpft", message:"foo"}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("Queue not found")
 				done()
 				return
 			return
 		it 'Should fail: Send a message without any parameters', (done) ->
 			rsmq.sendMessage {}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("No qname supplied")
 				done()
 				return
 			return
 		it 'Should fail: Send a message without a message key', (done) ->
 			rsmq.sendMessage {qname:queue1, messXage:"Hello"}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("Message must be a string")
 				done()
 				return
 			return
 		it 'Should fail: Send a message with message being a number', (done) ->
 			rsmq.sendMessage {qname:queue1, message:123}, (err, resp) ->
-				should.exist(err)
 				err.message.should.equal("Message must be a string")
 				done()
 				return
