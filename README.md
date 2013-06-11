@@ -16,8 +16,7 @@ This is still an alpha version. Use with care.
 * No security: **Like memcached**. Only for internal use in trusted environments.
 * Similar to Amazon SQS (Simple Queue Service) - with some differences:
   * Durability depends on your Redis setup.
-  * No ReceiptHandle. A message is deleted by the message id.
-    * This means that a message can be deleted if you store the id that is returned from the `sendMessage` method. 
+  * No ReceiptHandle. A message is deleted by the message id. A message can be deleted if you store the id that is returned from the `sendMessage` method.
   * No MessageRetentionPeriod: Messages stay in the queue unless deleted.
   * No bulk operations (SendMessageBatch, DeleteMessageBatch)
   * Some AWS specific features are missing
@@ -123,9 +122,6 @@ Returns:
 
 * `1` if successful, `0` if the message was not found.
 
-Errors:
-
-* `"Queue not found"`
 
 
 ### createQueue
@@ -180,7 +176,7 @@ Parameters:
 
 * `QueueName` (String): The Queue name.
 
-Returns:
+Returns an object:
 
 * `vt`: The visibility timeout for the queue in seconds
 * `delay`: The delay for new messages in seconds
@@ -198,9 +194,9 @@ Returns:
 
 List all queues
 
-Returns:
+Returns an array:
 
-* Array of queues (e.g. ["qname1", "qname2"])
+* `["qname1", "qname2"]`
 
 
 
@@ -213,7 +209,7 @@ Parameters:
 * `qname` (String): The Queue name.
 * `vt` (Number): *optional* *(Default: queue settings)* The length of time, in seconds, that the received message will be invisible to others. Allowed values: 0-9999999 (around 115 days)
 
-Returns:
+Returns an object:
 
   * `message`: The message's contents.
   * `id`: The internal message id.
