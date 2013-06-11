@@ -143,11 +143,6 @@ Returns:
 
 * `1`
 
-Errors:
-
-* `"Invalid qname format"`
-* `"Queue exists"`
-
 
 
 ### deleteMessage
@@ -160,10 +155,6 @@ Parameters:
 Returns:
 
 * `1` if successful, `0` if the message was not found.
-
-Errors:
-
-* `"Queue not found"`
 
 
 
@@ -179,10 +170,6 @@ Returns:
 
 * `1`
 
-Errors:
-
-* `"Invalid qname format"`
-* `"Queue not found"`
 
 
 ### getQueueAttributes
@@ -203,7 +190,8 @@ Returns:
 * `created`: Timestamp (epoch in seconds) when the queue was created
 * `modified`: Timestamp (epoch in seconds) when the queue was last modified with `setQueueAttributes`
 * `msgs`: Current number of messages in the queue
-* `hiddenmsgs`: Current number of hidden / not visible messages. A message can hidden while "in flight" due to a `vt` parameter or when sent with a `delay`.
+* `hiddenmsgs`: Current number of hidden / not visible messages. A message can hidden while "in flight" due to a `vt` parameter or when sent with a `delay`.	
+
 
 
 ### listQueues
@@ -213,6 +201,7 @@ List all queues
 Returns:
 
 * Array of queues (e.g. ["qname1", "qname2"])
+
 
 
 ### receiveMessage
@@ -234,10 +223,6 @@ Returns:
 
 Note: Will return an empty object if no message is there  
 
-Errors:
-
-* `"Queue not found"`
-
 
 
 ### sendMessage
@@ -253,11 +238,6 @@ Parameters:
 Returns:
 
 * `id`: The internal message id.
-
-Error:
-
-* `"Queue not found"`
-
 
 
 
