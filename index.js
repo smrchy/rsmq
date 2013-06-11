@@ -35,8 +35,12 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
         redishost = "127.0.0.1";
       }
       this.redisns = redisns != null ? redisns : "rsmq";
+      this._initErrors = __bind(this._initErrors, this);
+      this._handleError = __bind(this._handleError, this);
       this.sendMessage = __bind(this.sendMessage, this);
       this.receiveMessage = __bind(this.receiveMessage, this);
+      this.listQueues = __bind(this.listQueues, this);
+      this.getQueueAttributes = __bind(this.getQueueAttributes, this);
       this.deleteQueue = __bind(this.deleteQueue, this);
       this.deleteMessage = __bind(this.deleteMessage, this);
       this.createQueue = __bind(this.createQueue, this);
@@ -45,6 +49,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       this.redisns = this.redisns + ":";
       this.redis = RedisInst.createClient(redisport, redishost);
       this.initScript();
+      this._initErrors();
     }
 
     RedisSMQ.prototype._getQueue = function(qname, uid, cb) {
@@ -56,11 +61,11 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
         var ms, q, ts;
 
         if (err) {
-          cb(err);
+          _this._handleError(cb, err);
           return;
         }
         if (resp[0][0] === null || resp[0][1] === null || resp[0][2] === null) {
-          cb("Queue not found");
+          _this._handleError(cb, "queueNotFound");
           return;
         }
         ms = _this._formatZeroPad(Number(resp[1][1]), 6);
@@ -88,12 +93,12 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       }
       this._getQueue(options.qname, false, function(err, q) {
         if (err) {
-          cb(err);
+          _this._handleError(cb, err);
           return;
         }
         return _this.redis.evalsha(_this.changeMessageVisibility_sha1, 3, "" + _this.redisns + options.qname, options.id, q.ts + options.vt * 1000, function(err, resp) {
           if (err) {
-            cb(err);
+            _handleError(cb, err);
             return;
           }
           cb(null, resp);
@@ -102,7 +107,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
     };
 
     RedisSMQ.prototype.createQueue = function(options, cb) {
-      var mc, _ref, _ref1, _ref2,
+      var _ref, _ref1, _ref2,
         _this = this;
 
       options.vt = (_ref = options.vt) != null ? _ref : 30;
@@ -111,28 +116,37 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       if (this._validate(options, ["qname", "vt", "delay", "maxsize"], cb) === false) {
         return;
       }
-      mc = [["hsetnx", "" + this.redisns + options.qname + ":Q", "vt", options.vt], ["hsetnx", "" + this.redisns + options.qname + ":Q", "delay", options.delay], ["hsetnx", "" + this.redisns + options.qname + ":Q", "maxsize", options.maxsize]];
-      this.redis.multi(mc).exec(function(err, resp) {
+      this.redis.time(function(err, resp) {
+        var mc;
+
         if (err) {
-          cb(err);
+          _this._handleError(cb, err);
           return;
         }
-        if (resp[0] === 0) {
-          cb("Queue exists");
-          return;
-        }
-        _this.redis.sadd("" + _this.redisns + "QUEUES", options.qname, function(err, resp) {
+        mc = [["hsetnx", "" + _this.redisns + options.qname + ":Q", "vt", options.vt], ["hsetnx", "" + _this.redisns + options.qname + ":Q", "delay", options.delay], ["hsetnx", "" + _this.redisns + options.qname + ":Q", "maxsize", options.maxsize], ["hsetnx", "" + _this.redisns + options.qname + ":Q", "created", resp[0]], ["hsetnx", "" + _this.redisns + options.qname + ":Q", "modified", resp[0]]];
+        _this.redis.multi(mc).exec(function(err, resp) {
           if (err) {
-            cb(err);
+            _this._handleError(cb, err);
             return;
           }
-          cb(null, 1);
+          if (resp[0] === 0) {
+            _this._handleError(cb, "queueExists");
+            return;
+          }
+          _this.redis.sadd("" + _this.redisns + "QUEUES", options.qname, function(err, resp) {
+            if (err) {
+              _handleError(cb, err);
+              return;
+            }
+            cb(null, 1);
+          });
         });
       });
     };
 
     RedisSMQ.prototype.deleteMessage = function(options, cb) {
-      var key, mc;
+      var key, mc,
+        _this = this;
 
       if (this._validate(options, ["qname", "id"], cb) === false) {
         return;
@@ -141,7 +155,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       mc = [["zrem", key, options.id], ["hdel", "" + key + ":Q", "" + options.id, "" + options.id + ":rc", "" + options.id + ":fr"]];
       this.redis.multi(mc).exec(function(err, resp) {
         if (err) {
-          cb(err);
+          _this._handleError(cb, err);
           return;
         }
         if (resp[0] === 1 && resp[1] > 0) {
@@ -153,7 +167,8 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
     };
 
     RedisSMQ.prototype.deleteQueue = function(options, cb) {
-      var key, mc;
+      var key, mc,
+        _this = this;
 
       if (this._validate(options, ["qname"], cb) === false) {
         return;
@@ -162,14 +177,53 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       mc = [["del", "" + key + ":Q"], ["del", key], ["srem", "" + this.redisns + "QUEUES", options.qname]];
       this.redis.multi(mc).exec(function(err, resp) {
         if (err) {
-          cb(err);
+          _this._handleError(cb, err);
           return;
         }
         if (resp[0] === 0) {
-          cb("Queue not found");
+          _this._handleError(cb, "queueNotFound");
           return;
         }
         cb(null, 1);
+      });
+    };
+
+    RedisSMQ.prototype.getQueueAttributes = function(options, cb) {
+      var key,
+        _this = this;
+
+      if (this._validate(options, ["qname"], cb) === false) {
+        return;
+      }
+      key = "" + this.redisns + options.qname;
+      this.redis.time(function(err, resp) {
+        var mc;
+
+        if (err) {
+          _this._handleError(cb, err);
+          return;
+        }
+        mc = [["hmget", "" + key + ":Q", "vt", "delay", "maxsize", "totalrecv", "totalsent", "created", "modified"], ["zcard", key], ["zcount", key, "-inf", resp[0] + "000"]];
+        _this.redis.multi(mc).exec(function(err, resp) {
+          var o;
+
+          if (err) {
+            _this._handleError(cb, err);
+            return;
+          }
+          o = {
+            vt: parseInt(resp[0][0], 10),
+            delay: parseInt(resp[0][1], 10),
+            maxsize: parseInt(resp[0][2], 10),
+            totalrecv: parseInt(resp[0][3], 10),
+            totalsent: parseInt(resp[0][4], 10),
+            created: parseInt(resp[0][5], 10),
+            modified: parseInt(resp[0][6], 10),
+            msgs: resp[1],
+            hiddenmsgs: resp[2]
+          };
+          cb(null, o);
+        });
       });
     };
 
@@ -208,6 +262,18 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       });
     };
 
+    RedisSMQ.prototype.listQueues = function(cb) {
+      var _this = this;
+
+      this.redis.smembers("" + this.redisns + "QUEUES", function(err, resp) {
+        if (err) {
+          _this._handleError(cb, err);
+          return;
+        }
+        cb(null, resp);
+      });
+    };
+
     RedisSMQ.prototype.receiveMessage = function(options, cb) {
       var _this = this;
 
@@ -222,7 +288,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
         var _ref;
 
         if (err) {
-          cb(err);
+          _this._handleError(cb, err);
           return;
         }
         options.vt = (_ref = options.vt) != null ? _ref : q.vt;
@@ -233,7 +299,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           var o;
 
           if (err) {
-            cb(err);
+            _handleError(cb, err);
             return;
           }
           if (!resp.length) {
@@ -262,7 +328,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
         var mc, _ref;
 
         if (err) {
-          cb(err);
+          _this._handleError(cb, err);
           return;
         }
         options.delay = (_ref = options.delay) != null ? _ref : q.delay;
@@ -270,17 +336,17 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           return;
         }
         if (typeof options.message !== "string") {
-          cb("Message must be a string");
+          _this._handleError(cb, "messageNotString");
           return;
         }
         if (options.message.length > q.maxsize) {
-          cb("Message too long");
+          _this._handleError(cb, "messageTooLong");
           return;
         }
         mc = [["zadd", "" + _this.redisns + options.qname, q.ts + options.delay * 1000, q.uid], ["hset", "" + _this.redisns + options.qname + ":Q", q.uid, options.message], ["hincrby", "" + _this.redisns + options.qname + ":Q", "totalsent", 1]];
         _this.redis.multi(mc).exec(function(err, resp) {
           if (err) {
-            cb(err);
+            _handleError(cb, err);
             return;
           }
           cb(null, q.uid);
@@ -290,6 +356,33 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
     RedisSMQ.prototype._formatZeroPad = function(num, count) {
       return ((Math.pow(10, count) + num) + "").substr(1);
+    };
+
+    RedisSMQ.prototype._handleError = function(cb, err, data) {
+      var _err, _ref;
+
+      if (data == null) {
+        data = {};
+      }
+      if (_.isString(err)) {
+        _err = new Error();
+        _err.name = err;
+        _err.message = ((_ref = this._ERRORS) != null ? typeof _ref[err] === "function" ? _ref[err](data) : void 0 : void 0) || "unkown";
+      } else {
+        _err = err;
+      }
+      cb(_err);
+    };
+
+    RedisSMQ.prototype._initErrors = function() {
+      var key, msg, _ref;
+
+      this._ERRORS = {};
+      _ref = this.ERRORS;
+      for (key in _ref) {
+        msg = _ref[key];
+        this._ERRORS[key] = _.template(msg);
+      }
     };
 
     RedisSMQ.prototype._VALID = {
@@ -306,12 +399,16 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           case "qname":
           case "id":
             if (!o[item]) {
-              cb("No " + item + " supplied");
+              this._handleError(cb, "missingParameter", {
+                item: item
+              });
               return false;
             }
             o[item] = o[item].toString();
             if (!this._VALID[item].test(o[item])) {
-              cb("Invalid " + item + " format");
+              this._handleError(cb, "invalidFormat", {
+                item: item
+              });
               return false;
             }
             break;
@@ -319,19 +416,37 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           case "delay":
             o[item] = parseInt(o[item], 10);
             if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 0 || o[item] > 9999999) {
-              cb("" + item + " must be between 0 and 9999999");
+              this._handleError(cb, "invalidValue", {
+                item: item,
+                min: 0,
+                max: 9999999
+              });
               return false;
             }
             break;
           case "maxsize":
             o[item] = parseInt(o[item], 10);
             if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 1024 || o[item] > 65536) {
-              cb("" + item + " must be between 1024 and 65536");
+              this._handleError(cb, "invalidValue", {
+                item: item,
+                min: 1024,
+                max: 65536
+              });
               return false;
             }
         }
       }
       return o;
+    };
+
+    RedisSMQ.prototype.ERRORS = {
+      "missingParameter": "No <%= item %> supplied",
+      "invalidFormat": "Invalid <%= item %> format",
+      "invalidValue": "<%= item %> must be between <%= min %> and <%= max %>",
+      "messageNotString": "Message must be a string",
+      "messageTooLong": "Message too long",
+      "queueNotFound": "Queue not found",
+      "queueExists": "Queue exists"
     };
 
     return RedisSMQ;

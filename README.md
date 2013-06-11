@@ -185,6 +185,35 @@ Errors:
 * `"Queue not found"`
 
 
+### getQueueAttributes
+
+Get queue attributes, counter and stats
+
+Parameters:
+
+* `QueueName` (String): The Queue name.
+
+Returns:
+
+* `vt`: The visibility timeout for the queue in seconds
+* `delay`: The delay for new messages in seconds
+* `maxsize`: The maximum size of a message in bytes
+* `totalrecv`: Total number of messages received from the queue
+* `totalsent`: Total number of messages sent to the queue
+* `created`: Timestamp (epoch in seconds) when the queue was created
+* `modified`: Timestamp (epoch in seconds) when the queue was last modified with `setQueueAttributes`
+* `msgs`: Current number of messages in the queue
+* `hiddenmsgs`: Current number of hidden / not visible messages. A message can hidden while "in flight" due to a `vt` parameter or when sent with a `delay`.
+
+
+### listQueues
+
+List all queues
+
+Returns:
+
+* Array of queues (e.g. ["qname1", "qname2"])
+
 
 ### receiveMessage
 
@@ -236,14 +265,8 @@ Error:
 
 ## Not implemented yet
 
-### getQueueAttributes
 
-Lists the queue parameters.
-
-### listQueues
-
-Lists all queues.
-
+    
 ### setQueueAttributes
 
 Sets queue parameters.

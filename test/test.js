@@ -37,7 +37,7 @@
           qname: "should throw"
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("Invalid qname format");
+          err.message.should.equal("Invalid qname format");
           done();
         });
       });
@@ -46,7 +46,7 @@
           qname: "name01234567890123456789012345678901234567890123456789012345678901234567890123456789"
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("Invalid qname format");
+          err.message.should.equal("Invalid qname format");
           done();
         });
       });
@@ -56,7 +56,7 @@
           vt: -20
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("vt must be between 0 and 9999999");
+          err.message.should.equal("vt must be between 0 and 9999999");
           done();
         });
       });
@@ -66,7 +66,7 @@
           vt: "not_a_number"
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("vt must be between 0 and 9999999");
+          err.message.should.equal("vt must be between 0 and 9999999");
           done();
         });
       });
@@ -76,7 +76,7 @@
           vt: 10000000
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("vt must be between 0 and 9999999");
+          err.message.should.equal("vt must be between 0 and 9999999");
           done();
         });
       });
@@ -86,7 +86,7 @@
           delay: -20
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("delay must be between 0 and 9999999");
+          err.message.should.equal("delay must be between 0 and 9999999");
           done();
         });
       });
@@ -96,7 +96,7 @@
           delay: "not_a_number"
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("delay must be between 0 and 9999999");
+          err.message.should.equal("delay must be between 0 and 9999999");
           done();
         });
       });
@@ -106,7 +106,7 @@
           delay: 10000000
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("delay must be between 0 and 9999999");
+          err.message.should.equal("delay must be between 0 and 9999999");
           done();
         });
       });
@@ -116,7 +116,7 @@
           maxsize: -20
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("maxsize must be between 1024 and 65536");
+          err.message.should.equal("maxsize must be between 1024 and 65536");
           done();
         });
       });
@@ -126,7 +126,7 @@
           maxsize: "not_a_number"
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("maxsize must be between 1024 and 65536");
+          err.message.should.equal("maxsize must be between 1024 and 65536");
           done();
         });
       });
@@ -136,7 +136,7 @@
           maxsize: 66000
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("maxsize must be between 1024 and 65536");
+          err.message.should.equal("maxsize must be between 1024 and 65536");
           done();
         });
       });
@@ -146,7 +146,14 @@
           maxsize: 900
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("maxsize must be between 1024 and 65536");
+          err.message.should.equal("maxsize must be between 1024 and 65536");
+          done();
+        });
+      });
+      it('ListQueues: Should return empty array', function(done) {
+        rsmq.listQueues(function(err, resp) {
+          should.not.exist(err);
+          resp.length.should.equal(0);
           done();
         });
       });
@@ -164,16 +171,34 @@
           qname: queue1
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("Queue exists");
+          err.message.should.equal("Queue exists");
+          done();
+        });
+      });
+      it('ListQueues: Should return array with one element', function(done) {
+        rsmq.listQueues(function(err, resp) {
+          should.not.exist(err);
+          resp.length.should.equal(1);
+          resp.should.include(queue1);
           done();
         });
       });
       it('Create a new queue: queue2', function(done) {
         rsmq.createQueue({
-          qname: queue2
+          qname: queue2,
+          maxsize: 2048
         }, function(err, resp) {
           should.not.exist(err);
           resp.should.equal(1);
+          done();
+        });
+      });
+      it('ListQueues: Should return array with two elements', function(done) {
+        rsmq.listQueues(function(err, resp) {
+          should.not.exist(err);
+          resp.length.should.equal(2);
+          resp.should.include(queue1);
+          resp.should.include(queue2);
           done();
         });
       });
@@ -185,14 +210,14 @@
           message: "foo"
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("Queue not found");
+          err.message.should.equal("Queue not found");
           done();
         });
       });
       it('Should fail: Send a message without any parameters', function(done) {
         rsmq.sendMessage({}, function(err, resp) {
           should.exist(err);
-          err.should.equal("No qname supplied");
+          err.message.should.equal("No qname supplied");
           done();
         });
       });
@@ -202,7 +227,7 @@
           messXage: "Hello"
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("Message must be a string");
+          err.message.should.equal("Message must be a string");
           done();
         });
       });
@@ -212,7 +237,7 @@
           message: 123
         }, function(err, resp) {
           should.exist(err);
-          err.should.equal("Message must be a string");
+          err.message.should.equal("Message must be a string");
           done();
         });
       });
@@ -338,7 +363,7 @@
         rsmq.deleteMessage({
           qname: queue1
         }, function(err, resp) {
-          err.should.equal("No id supplied");
+          err.message.should.equal("No id supplied");
           done();
         });
       });
@@ -347,7 +372,7 @@
           qname: queue1,
           id: "sdafsdf"
         }, function(err, resp) {
-          err.should.equal("Invalid id format");
+          err.message.should.equal("Invalid id format");
           done();
         });
       });
@@ -392,7 +417,7 @@
           message: text
         }, function(err, resp) {
           should.not.exist(resp);
-          err.should.equal("Message too long");
+          err.message.should.equal("Message too long");
           done();
         });
       });
@@ -469,11 +494,22 @@
           });
         });
       });
-      return it('Receive a message from queue2. Should return {}', function(done) {
+      it('Receive a message from queue2. Should return {}', function(done) {
         rsmq.receiveMessage({
           qname: queue2
         }, function(err, resp) {
           should.not.exist(resp.id);
+          done();
+        });
+      });
+      return it('GetQueueAttributes: Should return queue attributes', function(done) {
+        rsmq.getQueueAttributes({
+          qname: queue2
+        }, function(err, resp) {
+          should.not.exist(err);
+          resp.totalrecv.should.equal(1500);
+          resp.totalsent.should.equal(1000);
+          resp.msgs.should.equal(0);
           done();
         });
       });

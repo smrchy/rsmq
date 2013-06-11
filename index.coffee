@@ -35,7 +35,7 @@ class RedisSMQ
 		@redisns = @redisns + ":"
 		@redis = RedisInst.createClient(redisport, redishost)
 		@initScript()
-
+		@_initErrors()
 
 	_getQueue: (qname, uid, cb) =>
 		mc = [
@@ -44,10 +44,10 @@ class RedisSMQ
 		]
 		@redis.multi(mc).exec (err, resp) =>
 			if err
-				cb(err)
+				@_handleError(cb, err)
 				return
 			if resp[0][0] is null or resp[0][1] is null or resp[0][2] is null
-				cb("Queue not found")
+				@_handleError(cb, "queueNotFound")
 				return
 			# Make sure to always have correct 6digit millionth seconds from redis
 			ms = @_formatZeroPad(Number(resp[1][1]), 6)
@@ -84,12 +84,12 @@ class RedisSMQ
 
 		@_getQueue options.qname, false, (err, q) =>
 			if err
-				cb(err)
+				@_handleError(cb, err)
 				return
 
-			@redis.evalsha @changeMessageVisibility_sha1, 3, "#{@redisns}#{options.qname}", options.id, q.ts + options.vt * 1000, (err, resp) ->
+			@redis.evalsha @changeMessageVisibility_sha1, 3, "#{@redisns}#{options.qname}", options.id, q.ts + options.vt * 1000, (err, resp) =>
 				if err
-					cb(err)
+					_handleError(cb, err)
 					return
 				cb(null, resp)
 				return
@@ -104,26 +104,34 @@ class RedisSMQ
 		if @_validate(options, ["qname","vt","delay","maxsize"],cb) is false
 			return
 
-		mc = [
-			["hsetnx", "#{@redisns}#{options.qname}:Q", "vt", options.vt]
-			["hsetnx", "#{@redisns}#{options.qname}:Q", "delay", options.delay]
-			["hsetnx", "#{@redisns}#{options.qname}:Q", "maxsize", options.maxsize]
-		]
-
-		@redis.multi(mc).exec (err, resp) =>
+		@redis.time (err, resp) =>
 			if err
-				cb(err)
+				@_handleError(cb, err)
 				return
-			if resp[0] is 0
-				cb("Queue exists")
-				return
-			# We created a new queue
-			# Also store it in the global set to keep an index of all queues
-			@redis.sadd "#{@redisns}QUEUES", options.qname, (err, resp) ->
+
+			mc = [
+				["hsetnx", "#{@redisns}#{options.qname}:Q", "vt", options.vt]
+				["hsetnx", "#{@redisns}#{options.qname}:Q", "delay", options.delay]
+				["hsetnx", "#{@redisns}#{options.qname}:Q", "maxsize", options.maxsize]
+				["hsetnx", "#{@redisns}#{options.qname}:Q", "created", resp[0]]
+				["hsetnx", "#{@redisns}#{options.qname}:Q", "modified", resp[0]]
+			]
+
+			@redis.multi(mc).exec (err, resp) =>
 				if err
-					cb(err)
+					@_handleError(cb, err)
 					return
-				cb(null, 1)
+				if resp[0] is 0
+					@_handleError(cb, "queueExists")
+					return
+				# We created a new queue
+				# Also store it in the global set to keep an index of all queues
+				@redis.sadd "#{@redisns}QUEUES", options.qname, (err, resp) =>
+					if err
+						_handleError(cb, err)
+						return
+					cb(null, 1)
+					return
 				return
 			return
 		return
@@ -138,9 +146,9 @@ class RedisSMQ
 			["hdel", "#{key}:Q", "#{options.id}", "#{options.id}:rc", "#{options.id}:fr" ]
 		]
 
-		@redis.multi(mc).exec (err, resp) ->
+		@redis.multi(mc).exec (err, resp) =>
 			if err
-				cb(err)
+				@_handleError(cb, err)
 				return
 			if resp[0] is 1 and resp[1] > 0
 				cb(null, 1)
@@ -159,17 +167,56 @@ class RedisSMQ
 			["srem", "#{@redisns}QUEUES", options.qname]
 		]
 
-		@redis.multi(mc).exec (err,resp) ->
+		@redis.multi(mc).exec (err,resp) =>
 			if err
-				cb(err)
+				@_handleError(cb, err)
 				return
 			if resp[0] is 0
-				cb("Queue not found")
+				@_handleError(cb, "queueNotFound")
 				return
 
 			cb(null, 1)
 			return
 		return
+
+	getQueueAttributes: (options, cb) =>
+		if @_validate(options, ["qname"],cb) is false
+			return
+		key = "#{@redisns}#{options.qname}"
+		@redis.time (err, resp) =>
+			if err
+				@_handleError(cb, err)
+				return
+
+			# Get basic attributes and counter
+			# Get total number of messages
+			# Get total number of messages in flight (not visible yet)
+			mc = [
+				["hmget", "#{key}:Q", "vt", "delay", "maxsize", "totalrecv", "totalsent", "created", "modified"]
+				["zcard", key]
+				["zcount", key, "-inf", resp[0] + "000"]
+			]
+			@redis.multi(mc).exec (err, resp) =>
+				if err
+					@_handleError(cb, err)
+					return
+
+				o =
+					vt: parseInt(resp[0][0], 10)
+					delay: parseInt(resp[0][1], 10)
+					maxsize: parseInt(resp[0][2], 10)
+					totalrecv: parseInt(resp[0][3], 10)
+					totalsent: parseInt(resp[0][4], 10)
+					created: parseInt(resp[0][5], 10)
+					modified: parseInt(resp[0][6], 10)
+					msgs: resp[1]
+					hiddenmsgs: resp[2]
+					
+				cb(null, o)
+				return
+			return
+		return
+
 
 	initScript: (cb) ->
 		# The receiveMessage LUA Script
@@ -238,6 +285,17 @@ class RedisSMQ
 			return
 		return
 
+
+	listQueues: (cb) =>
+		@redis.smembers "#{@redisns}QUEUES", (err, resp) =>
+			if err
+				@_handleError(cb, err)
+				return
+			cb(null, resp)
+			return
+		return
+
+
 	receiveMessage: (options, cb) =>
 		# Make sure the @receiveMessage_sha1 is there
 		if not @receiveMessage_sha1
@@ -249,7 +307,7 @@ class RedisSMQ
 
 		@_getQueue options.qname, false, (err, q) =>
 			if err
-				cb(err)
+				@_handleError(cb, err)
 				return
 
 			# Now that we got the default queue settings
@@ -260,9 +318,9 @@ class RedisSMQ
 
 
 
-			@redis.evalsha @receiveMessage_sha1, 3, "#{@redisns}#{options.qname}", q.ts, q.ts + options.vt * 1000, (err, resp) ->
+			@redis.evalsha @receiveMessage_sha1, 3, "#{@redisns}#{options.qname}", q.ts, q.ts + options.vt * 1000, (err, resp) =>
 				if err
-					cb(err)
+					_handleError(cb, err)
 					return
 				
 				if not resp.length
@@ -287,7 +345,7 @@ class RedisSMQ
 
 		@_getQueue options.qname, true, (err, q) =>
 			if err
-				cb(err)
+				@_handleError(cb, err)
 				return
 
 			# Now that we got the default queue settings
@@ -298,10 +356,10 @@ class RedisSMQ
 
 			# Check the message
 			if typeof options.message isnt "string"
-				cb("Message must be a string")
+				@_handleError(cb, "messageNotString")
 				return
 			if options.message.length > q.maxsize
-				cb("Message too long")
+				@_handleError(cb, "messageTooLong")
 				return
 
 			# Ready to store the message
@@ -311,9 +369,9 @@ class RedisSMQ
 				["hincrby", "#{@redisns}#{options.qname}:Q", "totalsent", 1]
 			]
 
-			@redis.multi(mc).exec (err, resp) ->
+			@redis.multi(mc).exec (err, resp) =>
 				if err
-					cb(err)
+					_handleError(cb, err)
 					return
 				cb(null, q.uid)
 				return
@@ -327,6 +385,25 @@ class RedisSMQ
 	_formatZeroPad: (num, count) ->
 		((Math.pow(10, count)+num)+"").substr(1)
 
+
+	_handleError: (cb, err, data={}) =>
+		# try to create a error Object with humanized message
+		if _.isString(err)
+			_err = new Error()
+			_err.name = err
+			_err.message = @_ERRORS?[err]?(data) or "unkown"
+		else 
+			_err = err
+		cb(_err)
+		return
+
+	_initErrors: =>
+		@_ERRORS = {}
+		for key, msg of @ERRORS
+			@_ERRORS[key] = _.template(msg)
+		return
+
+
 	_VALID:
 		qname:	/^([a-zA-Z0-9_-]){1,80}$/
 		id:		/^([a-zA-Z0-9:]){42}$/
@@ -337,23 +414,35 @@ class RedisSMQ
 			switch item
 				when "qname", "id"
 					if not o[item]
-						cb("No #{item} supplied")
+						@_handleError(cb, "missingParameter", {item:item})
 						return false
 					o[item] = o[item].toString()
 					if not @_VALID[item].test(o[item])
-						cb("Invalid #{item} format")
+						@_handleError(cb, "invalidFormat", {item:item})
 						return false
 				when "vt", "delay"
 					o[item] = parseInt(o[item],10)
 					if _.isNaN(o[item]) or not _.isNumber(o[item]) or o[item] < 0 or o[item] > 9999999
-						cb("#{item} must be between 0 and 9999999")
+						@_handleError(cb, "invalidValue", {item:item,min:0,max:9999999})
 						return false
 				when "maxsize"
 					o[item] = parseInt(o[item],10)
 					if _.isNaN(o[item]) or not _.isNumber(o[item]) or o[item] < 1024 or o[item] > 65536
-						cb("#{item} must be between 1024 and 65536")
+						@_handleError(cb, "invalidValue", {item:item,min:1024,max:65536})
 						return false
 		return o
+
+
+
+	ERRORS:
+		"missingParameter": "No <%= item %> supplied"
+		"invalidFormat": "Invalid <%= item %> format"
+		"invalidValue": "<%= item %> must be between <%= min %> and <%= max %>"
+		"messageNotString": "Message must be a string"
+		"messageTooLong": "Message too long"
+		"queueNotFound": "Queue not found"
+		"queueExists": "Queue exists"
+
 
 
 
