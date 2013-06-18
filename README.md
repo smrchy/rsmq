@@ -45,8 +45,7 @@ This is still an alpha version. Use with care.
 
 ```javascript
 RedisSMQ = require("rsmq");
-// Initialize RedisSMQ(redisport, redishost, namespaceprefix)
-rsmq = new RedisSMQ(6379,"127.0.0.1","rsmq");
+rsmq = new RedisSMQ( {host: "127.0.0.1", port: 6379, ns: "rsmq"} );
 ```
 
 ### Create a queue
