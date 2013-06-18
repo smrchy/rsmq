@@ -261,7 +261,7 @@
           for (_j = 0, _len = resp.length; _j < _len; _j++) {
             e = resp[_j];
             q2msgs[e] = 1;
-            e.length.should.equal(42);
+            e.length.should.equal(32);
           }
           _.keys(q2msgs).length.should.equal(1000);
           done();
@@ -299,7 +299,7 @@
       it('Should fail. Set the visibility of a non existing message', function(done) {
         rsmq.changeMessageVisibility({
           qname: queue1,
-          id: "abcdefghij0123456789abcdefghij0123456789ab",
+          id: "abcdefghij0123456789abcdefghij01",
           vt: 10
         }, function(err, resp) {
           resp.should.equal(0);
@@ -446,6 +446,15 @@
             }
             done();
           });
+        });
+      });
+      it('GetQueueAttributes: Should return queue attributes', function(done) {
+        rsmq.getQueueAttributes({
+          qname: queue2
+        }, function(err, resp) {
+          should.not.exist(err);
+          resp.msgs.should.equal(500);
+          done();
         });
       });
       it('Receive 500 messages from queue2 and delete them', function(done) {

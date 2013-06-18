@@ -31,6 +31,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		return
 
 	describe 'Queues', ->
+
 		it 'Should fail: Create a new queue with invalid characters in name', (done) ->
 			rsmq.createQueue {qname:"should throw"}, (err, resp) ->
 				err.message.should.equal("Invalid qname format")
@@ -213,7 +214,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 			async.map pq, rsmq.sendMessage, (err, resp) ->
 				for e in resp
 					q2msgs[e] = 1
-					e.length.should.equal(42)
+					e.length.should.equal(32)
 				_.keys(q2msgs).length.should.equal(1000)
 				done()
 				return
@@ -246,7 +247,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 
 
 		it 'Should fail. Set the visibility of a non existing message', (done) ->
-			rsmq.changeMessageVisibility {qname:queue1, id:"abcdefghij0123456789abcdefghij0123456789ab", vt:10}, (err, resp) ->
+			rsmq.changeMessageVisibility {qname:queue1, id:"abcdefghij0123456789abcdefghij01", vt:10}, (err, resp) ->
 				resp.should.equal(0)
 				done()
 				return
@@ -346,6 +347,14 @@ describe 'Redis-Simple-Message-Queue Test', ->
 						e.should.equal(1)
 					done()
 					return
+				return
+			return
+
+		it 'GetQueueAttributes: Should return queue attributes', (done) ->
+			rsmq.getQueueAttributes {qname:queue2}, (err, resp) ->
+				should.not.exist(err)
+				resp.msgs.should.equal(500)
+				done()
 				return
 			return
 

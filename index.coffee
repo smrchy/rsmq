@@ -18,6 +18,9 @@ crypto = require "crypto"
 _ = require "underscore"
 RedisInst = require "redis"
 
+events = require "events"
+eventEmitter = new events.EventEmitter()
+
 # To create a new instance use:
 #
 # 	RedisSMQ = require("redis-simple-message-queue")
@@ -25,15 +28,22 @@ RedisInst = require "redis"
 #
 #	Paramenters for RedisSMQ:
 #
-#	`redisport`, `redishost`, `redisns`
-#
-# Defaults are: `6379`, `"127.0.0.1"`, `"rsmq"`
-#
+#	* `host` (String): *optional (Default: "127.0.0.1")* The Redis server
+#	* `port` (Number): *optional (Default: 6379)* The Redis port
+#	* `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by **rsmq**
+##
 class RedisSMQ
 
-	constructor: (redisport=6379, redishost="127.0.0.1", @redisns="rsmq") ->
-		@redisns = @redisns + ":"
-		@redis = RedisInst.createClient(redisport, redishost)
+	constructor: (options = {}) ->
+		
+		opts = _.extend
+			host: "127.0.0.1"
+			port: 6379
+			ns: "rsmq"
+		, options
+
+		@redisns = opts.ns + ":"
+		@redis = RedisInst.createClient(opts.port, opts.host)
 		@initScript()
 		@_initErrors()
 
@@ -66,8 +76,7 @@ class RedisSMQ
 			# lets redis order the messages correctly even when they are
 			# in the same millisecond.
 			if uid
-				uid = qname + Math.random()
-				uid = crypto.createHash('md5').update(uid).digest("hex")
+				uid = @_makeid(22)
 				q.uid = Number(resp[1][0] + ms).toString(36) + uid
 			cb(null, q)
 			return
@@ -86,13 +95,25 @@ class RedisSMQ
 			if err
 				@_handleError(cb, err)
 				return
-
-			@redis.evalsha @changeMessageVisibility_sha1, 3, "#{@redisns}#{options.qname}", options.id, q.ts + options.vt * 1000, (err, resp) =>
-				if err
-					_handleError(cb, err)
-					return
-				cb(null, resp)
+			# Make really sure that the LUA script is loaded
+			if @changeMessageVisibility_sha1
+				@_changeMessageVisibility(options, q, cb)
 				return
+			changeMessageVisibility.on 'changeMessageVisibility', =>
+				@_changeMessageVisibility(options, q, cb)
+				return
+			return
+			
+		return
+
+
+	_changeMessageVisibility: (options, q, cb) =>
+		@redis.evalsha @changeMessageVisibility_sha1, 3, "#{@redisns}#{options.qname}", options.id, q.ts + options.vt * 1000, (err, resp) =>
+			if err
+				_handleError(cb, err)
+				return
+			cb(null, resp)
+			return
 		return
 
 
@@ -283,9 +304,11 @@ class RedisSMQ
 
 		@redis.script "load", script_receiveMessage, (err, resp) =>
 			@receiveMessage_sha1 = resp
+			eventEmitter.emit('receiveMessage', 'ready');
 			return
 		@redis.script "load", script_changeMessageVisibility, (err, resp) =>
 			@changeMessageVisibility_sha1 = resp
+			eventEmitter.emit('changeMessageVisibility', 'ready');
 			return
 		return
 
@@ -301,11 +324,6 @@ class RedisSMQ
 
 
 	receiveMessage: (options, cb) =>
-		# Make sure the @receiveMessage_sha1 is there
-		if not @receiveMessage_sha1
-			cb(null, {})
-			return
-
 		if @_validate(options, ["qname"],cb) is false
 			return
 
@@ -320,26 +338,35 @@ class RedisSMQ
 			if @_validate(options, ["vt"],cb) is false
 				return
 
-
-
-			@redis.evalsha @receiveMessage_sha1, 3, "#{@redisns}#{options.qname}", q.ts, q.ts + options.vt * 1000, (err, resp) =>
-				if err
-					_handleError(cb, err)
-					return
-				
-				if not resp.length
-					cb(null, {})
-					return
-				o =
-					id:		 	resp[0]
-					message:	resp[1]
-					rc:			resp[2]
-					fr:			Number(resp[3])
-					sent:		parseInt(parseInt(resp[0][0...10],36)/1000)
-
-				
-				cb(null, o)
+			# Make really sure that the LUA script is loaded
+			if @receiveMessage_sha1
+				@_receiveMessage(options, q, cb)
 				return
+			eventEmitter.on 'receiveMessage', =>
+				@_receiveMessage(options, q, cb)
+				return
+			return
+		return
+
+
+	_receiveMessage: (options, q, cb) =>
+		@redis.evalsha @receiveMessage_sha1, 3, "#{@redisns}#{options.qname}", q.ts, q.ts + options.vt * 1000, (err, resp) =>
+			if err
+				_handleError(cb, err)
+				return
+			
+			if not resp.length
+				cb(null, {})
+				return
+			o =
+				id:		 	resp[0]
+				message:	resp[1]
+				rc:			resp[2]
+				fr:			Number(resp[3])
+				sent:		parseInt(parseInt(resp[0][0...10],36)/1000)
+
+			
+			cb(null, o)
 			return
 		return
 
@@ -407,10 +434,16 @@ class RedisSMQ
 			@_ERRORS[key] = _.template(msg)
 		return
 
-
+	_makeid: (len) ->
+		text = ""
+		possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		for i in [0...len]
+			text += possible.charAt(Math.floor(Math.random() * possible.length))
+		return text
+	
 	_VALID:
 		qname:	/^([a-zA-Z0-9_-]){1,80}$/
-		id:		/^([a-zA-Z0-9:]){42}$/
+		id:		/^([a-zA-Z0-9:]){32}$/
 
                     
 	_validate: (o, items, cb) ->
