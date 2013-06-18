@@ -4,6 +4,8 @@ A really simple message queue based on Redis
 
 [![Build Status](https://secure.travis-ci.org/smrchy/rsmq.png?branch=master)](http://travis-ci.org/smrchy/rsmq)
 
+**tl;dr:** If you run a Redis server and currently use Amazon SQS or a similar message queue you might as well use this fast little replacement. Using a shared Redis server multiple NodeJS processes can send / receive messages. The `receiveMessage` Method uses a Redis Lua script to ensure a message is only delivered to a single recipient.
+
 ## Alpha version. 
 
 This is still an alpha version. Use with care.
@@ -14,6 +16,7 @@ This is still an alpha version. Use with care.
 * Lightweight: **Just Redis**. Every client can send and receive messages via a shared Redis server. 
 * Guaranteed **delivery of a message to exactly one recipient** within a messages visibility timeout.
 * No security: **Like memcached**. Only for internal use in trusted environments.
+* [Test coverage](http://travis-ci.org/smrchy/rsmq)
 * Similar to Amazon SQS (Simple Queue Service) - with some differences:
   * Durability depends on your Redis setup.
   * No ReceiptHandle. A message is deleted by the message id. A message can be deleted if you store the id that is returned from the `sendMessage` method.
