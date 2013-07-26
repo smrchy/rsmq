@@ -50,6 +50,12 @@ This is still an alpha version. Use with care.
 RedisSMQ = require("rsmq");
 rsmq = new RedisSMQ( {host: "127.0.0.1", port: 6379, ns: "rsmq"} );
 ```
+Parameters for RedisSMQ via an *options* object:
+
+* `host` (String): *optional (Default: "127.0.0.1")* The Redis server
+* `port` (Number): *optional (Default: 6379)* The Redis port
+* `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by **rsmq**
+
 
 ### Create a queue
 
@@ -162,7 +168,7 @@ Deletes a queue and all messages.
 
 Parameters:
 
-* `QueueName` (String): The Queue name.
+* `qname` (String): The Queue name.
 
 Returns:
 
@@ -176,7 +182,7 @@ Get queue attributes, counter and stats
 
 Parameters:
 
-* `QueueName` (String): The Queue name.
+* `qname` (String): The Queue name.
 
 Returns an object:
 

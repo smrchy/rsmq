@@ -26,7 +26,7 @@ eventEmitter = new events.EventEmitter()
 # 	RedisSMQ = require("redis-simple-message-queue")
 #	rsmq = new RedisSMQ()
 #
-#	Paramenters for RedisSMQ:
+#	Parameters for RedisSMQ via an *options* object:
 #
 #	* `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 #	* `port` (Number): *optional (Default: 6379)* The Redis port
