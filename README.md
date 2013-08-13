@@ -257,6 +257,10 @@ Sets queue parameters.
 
 
 
+## Changes
+
+see the [CHANGELOG](https://github.com/smrchy/rsmq/blob/master/CHANGELOG.md)
+
 ## The MIT License (MIT)
 
 Copyright © 2013 Patrick Liess, http://www.tcs.de

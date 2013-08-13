@@ -1,4 +1,4 @@
-# Changelog for rsmq
+# CHANGELOG for rsmq
 
 0.3.1
 
