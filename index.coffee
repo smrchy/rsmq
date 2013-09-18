@@ -39,11 +39,16 @@ class RedisSMQ
 		opts = _.extend
 			host: "127.0.0.1"
 			port: 6379
+			client: null
 			ns: "rsmq"
 		, options
 
 		@redisns = opts.ns + ":"
-		@redis = RedisInst.createClient(opts.port, opts.host)
+		if opt?.client?.constructor?.name is "RedisClient"
+			@redis = opt.client
+		else
+			@redis = RedisInst.createClient(opts.port, opts.host)
+
 		@initScript()
 		@_initErrors()
 

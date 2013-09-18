@@ -1,2 +1,13 @@
 node_modules/
 npm-debug.log
+
+*.profile
+*.lock
+*.conflict
+*.DS_Store
+
+.project
+.settings
+.idea
+
+*.sublime*
