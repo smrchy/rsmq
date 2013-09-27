@@ -1,7 +1,7 @@
 {
     "name": "rsmq",
     "description": "A really simple message queue based on Redis",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "author": "P. Liess <smrchy+npm@gmail.com>",
     "engines": {
 		"node": "> 0.8.10"

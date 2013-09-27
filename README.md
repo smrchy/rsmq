@@ -6,10 +6,6 @@ A really simple message queue based on Redis
 
 **tl;dr:** If you run a Redis server and currently use Amazon SQS or a similar message queue you might as well use this fast little replacement. Using a shared Redis server multiple NodeJS processes can send / receive messages. The `receiveMessage` Method uses a Redis Lua script to ensure a message is only delivered to a single recipient.
 
-## Alpha version. 
-
-This is still an alpha version. Use with care.
-
 
 ## Features
 
