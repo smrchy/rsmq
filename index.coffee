@@ -18,21 +18,20 @@ crypto = require "crypto"
 _ = require "underscore"
 RedisInst = require "redis"
 
-events = require "events"
-eventEmitter = new events.EventEmitter()
+EventEmitter = require( "events" ).EventEmitter
 
 # To create a new instance use:
 #
 # 	RedisSMQ = require("redis-simple-message-queue")
 #	rsmq = new RedisSMQ()
 #
-#	Parameters for RedisSMQ via an *options* object:
+#	Paramenters for RedisSMQ:
 #
 #	* `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 #	* `port` (Number): *optional (Default: 6379)* The Redis port
 #	* `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by **rsmq**
 ##
-class RedisSMQ
+class RedisSMQ extends EventEmitter
 
 	constructor: (options = {}) ->
 		
@@ -49,8 +48,25 @@ class RedisSMQ
 		else
 			@redis = RedisInst.createClient(opts.port, opts.host)
 
-		@initScript()
+		@connected = @redis.connected or false
+		@redis.on "connect", =>
+			@connected = true
+			@emit( "connect" )
+			@initScript()
+			return
+
+
+		@redis.on "error", ( err )=>
+			if err.message.indexOf( "ECONNREFUSED" )
+				@connected = false
+				@emit( "disconnect" )
+			else
+				console.error( "Redis ERROR", err )
+				@emit( "disconnect" )
+			return
+
 		@_initErrors()
+		return
 
 	_getQueue: (qname, uid, cb) =>
 		mc = [
@@ -104,7 +120,7 @@ class RedisSMQ
 			if @changeMessageVisibility_sha1
 				@_changeMessageVisibility(options, q, cb)
 				return
-			changeMessageVisibility.on 'changeMessageVisibility', =>
+			changeMessageVisibility.on 'scriptload:changeMessageVisibility', =>
 				@_changeMessageVisibility(options, q, cb)
 				return
 			return
@@ -115,7 +131,7 @@ class RedisSMQ
 	_changeMessageVisibility: (options, q, cb) =>
 		@redis.evalsha @changeMessageVisibility_sha1, 3, "#{@redisns}#{options.qname}", options.id, q.ts + options.vt * 1000, (err, resp) =>
 			if err
-				_handleError(cb, err)
+				@_handleError(cb, err)
 				return
 			cb(null, resp)
 			return
@@ -154,7 +170,7 @@ class RedisSMQ
 				# Also store it in the global set to keep an index of all queues
 				@redis.sadd "#{@redisns}QUEUES", options.qname, (err, resp) =>
 					if err
-						_handleError(cb, err)
+						@_handleError(cb, err)
 						return
 					cb(null, 1)
 					return
@@ -309,11 +325,11 @@ class RedisSMQ
 
 		@redis.script "load", script_receiveMessage, (err, resp) =>
 			@receiveMessage_sha1 = resp
-			eventEmitter.emit('receiveMessage', 'ready');
+			@emit('scriptload:receiveMessage');
 			return
 		@redis.script "load", script_changeMessageVisibility, (err, resp) =>
 			@changeMessageVisibility_sha1 = resp
-			eventEmitter.emit('changeMessageVisibility', 'ready');
+			@emit('scriptload:changeMessageVisibility');
 			return
 		return
 
@@ -347,7 +363,7 @@ class RedisSMQ
 			if @receiveMessage_sha1
 				@_receiveMessage(options, q, cb)
 				return
-			eventEmitter.on 'receiveMessage', =>
+			@on 'scriptload:receiveMessage', =>
 				@_receiveMessage(options, q, cb)
 				return
 			return
@@ -357,7 +373,7 @@ class RedisSMQ
 	_receiveMessage: (options, q, cb) =>
 		@redis.evalsha @receiveMessage_sha1, 3, "#{@redisns}#{options.qname}", q.ts, q.ts + options.vt * 1000, (err, resp) =>
 			if err
-				_handleError(cb, err)
+				@_handleError(cb, err)
 				return
 			
 			if not resp.length
@@ -407,7 +423,7 @@ class RedisSMQ
 
 			@redis.multi(mc).exec (err, resp) =>
 				if err
-					_handleError(cb, err)
+					@_handleError(cb, err)
 					return
 				cb(null, q.uid)
 				return

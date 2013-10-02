@@ -17,8 +17,10 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 
 (function() {
-  var RedisInst, RedisSMQ, crypto, eventEmitter, events, _,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var EventEmitter, RedisInst, RedisSMQ, crypto, _,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   crypto = require("crypto");
 
@@ -26,13 +28,14 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
   RedisInst = require("redis");
 
-  events = require("events");
+  EventEmitter = require("events").EventEmitter;
 
-  eventEmitter = new events.EventEmitter();
+  RedisSMQ = (function(_super) {
+    __extends(RedisSMQ, _super);
 
-  RedisSMQ = (function() {
     function RedisSMQ(options) {
-      var opts, _ref, _ref1;
+      var opts, _ref, _ref1,
+        _this = this;
       if (options == null) {
         options = {};
       }
@@ -61,8 +64,23 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       } else {
         this.redis = RedisInst.createClient(opts.port, opts.host);
       }
-      this.initScript();
+      this.connected = this.redis.connected || false;
+      this.redis.on("connect", function() {
+        _this.connected = true;
+        _this.emit("connect");
+        _this.initScript();
+      });
+      this.redis.on("error", function(err) {
+        if (err.message.indexOf("ECONNREFUSED")) {
+          _this.connected = false;
+          _this.emit("disconnect");
+        } else {
+          console.error("Redis ERROR", err);
+          _this.emit("disconnect");
+        }
+      });
       this._initErrors();
+      return;
     }
 
     RedisSMQ.prototype._getQueue = function(qname, uid, cb) {
@@ -109,7 +127,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           _this._changeMessageVisibility(options, q, cb);
           return;
         }
-        changeMessageVisibility.on('changeMessageVisibility', function() {
+        changeMessageVisibility.on('scriptload:changeMessageVisibility', function() {
           _this._changeMessageVisibility(options, q, cb);
         });
       });
@@ -119,7 +137,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       var _this = this;
       this.redis.evalsha(this.changeMessageVisibility_sha1, 3, "" + this.redisns + options.qname, options.id, q.ts + options.vt * 1000, function(err, resp) {
         if (err) {
-          _handleError(cb, err);
+          _this._handleError(cb, err);
           return;
         }
         cb(null, resp);
@@ -153,7 +171,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           }
           _this.redis.sadd("" + _this.redisns + "QUEUES", options.qname, function(err, resp) {
             if (err) {
-              _handleError(cb, err);
+              _this._handleError(cb, err);
               return;
             }
             cb(null, 1);
@@ -272,11 +290,11 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 			return 1';
       this.redis.script("load", script_receiveMessage, function(err, resp) {
         _this.receiveMessage_sha1 = resp;
-        eventEmitter.emit('receiveMessage', 'ready');
+        _this.emit('scriptload:receiveMessage');
       });
       this.redis.script("load", script_changeMessageVisibility, function(err, resp) {
         _this.changeMessageVisibility_sha1 = resp;
-        eventEmitter.emit('changeMessageVisibility', 'ready');
+        _this.emit('scriptload:changeMessageVisibility');
       });
     };
 
@@ -310,7 +328,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           _this._receiveMessage(options, q, cb);
           return;
         }
-        eventEmitter.on('receiveMessage', function() {
+        _this.on('scriptload:receiveMessage', function() {
           _this._receiveMessage(options, q, cb);
         });
       });
@@ -321,7 +339,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       this.redis.evalsha(this.receiveMessage_sha1, 3, "" + this.redisns + options.qname, q.ts, q.ts + options.vt * 1000, function(err, resp) {
         var o;
         if (err) {
-          _handleError(cb, err);
+          _this._handleError(cb, err);
           return;
         }
         if (!resp.length) {
@@ -365,7 +383,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
         mc = [["zadd", "" + _this.redisns + options.qname, q.ts + options.delay * 1000, q.uid], ["hset", "" + _this.redisns + options.qname + ":Q", q.uid, options.message], ["hincrby", "" + _this.redisns + options.qname + ":Q", "totalsent", 1]];
         _this.redis.multi(mc).exec(function(err, resp) {
           if (err) {
-            _handleError(cb, err);
+            _this._handleError(cb, err);
             return;
           }
           cb(null, q.uid);
@@ -477,7 +495,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
     return RedisSMQ;
 
-  })();
+  })(EventEmitter);
 
   module.exports = RedisSMQ;
 
