@@ -43,8 +43,8 @@ class RedisSMQ extends EventEmitter
 		, options
 
 		@redisns = opts.ns + ":"
-		if opt?.client?.constructor?.name is "RedisClient"
-			@redis = opt.client
+		if opts.client?.constructor?.name is "RedisClient"
+			@redis = opts.client
 		else
 			@redis = RedisInst.createClient(opts.port, opts.host)
 
@@ -62,7 +62,7 @@ class RedisSMQ extends EventEmitter
 				@emit( "disconnect" )
 			else
 				console.error( "Redis ERROR", err )
-				@emit( "disconnect" )
+				@emit( "error" )
 			return
 
 		@_initErrors()

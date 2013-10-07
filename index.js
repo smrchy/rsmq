@@ -59,8 +59,8 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
         ns: "rsmq"
       }, options);
       this.redisns = opts.ns + ":";
-      if ((typeof opt !== "undefined" && opt !== null ? (_ref = opt.client) != null ? (_ref1 = _ref.constructor) != null ? _ref1.name : void 0 : void 0 : void 0) === "RedisClient") {
-        this.redis = opt.client;
+      if (((_ref = opts.client) != null ? (_ref1 = _ref.constructor) != null ? _ref1.name : void 0 : void 0) === "RedisClient") {
+        this.redis = opts.client;
       } else {
         this.redis = RedisInst.createClient(opts.port, opts.host);
       }
@@ -76,7 +76,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           _this.emit("disconnect");
         } else {
           console.error("Redis ERROR", err);
-          _this.emit("disconnect");
+          _this.emit("error");
         }
       });
       this._initErrors();
