@@ -29,6 +29,8 @@ EventEmitter = require( "events" ).EventEmitter
 #
 #	* `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 #	* `port` (Number): *optional (Default: 6379)* The Redis port
+#	* `options` (Object): *optional (Default: {})* The Redis options object.
+#   * `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
 #	* `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by **rsmq**
 ##
 class RedisSMQ extends EventEmitter
@@ -38,6 +40,7 @@ class RedisSMQ extends EventEmitter
 		opts = _.extend
 			host: "127.0.0.1"
 			port: 6379
+			options: {}
 			client: null
 			ns: "rsmq"
 		, options
@@ -46,7 +49,7 @@ class RedisSMQ extends EventEmitter
 		if opts.client?.constructor?.name is "RedisClient"
 			@redis = opts.client
 		else
-			@redis = RedisInst.createClient(opts.port, opts.host)
+			@redis = RedisInst.createClient(opts.port, opts.host, opts.options)
 
 		@connected = @redis.connected or false
 		@redis.on "connect", =>

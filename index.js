@@ -55,6 +55,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       opts = _.extend({
         host: "127.0.0.1",
         port: 6379,
+        options: {},
         client: null,
         ns: "rsmq"
       }, options);
@@ -62,7 +63,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       if (((_ref = opts.client) != null ? (_ref1 = _ref.constructor) != null ? _ref1.name : void 0 : void 0) === "RedisClient") {
         this.redis = opts.client;
       } else {
-        this.redis = RedisInst.createClient(opts.port, opts.host);
+        this.redis = RedisInst.createClient(opts.port, opts.host, opts.options);
       }
       this.connected = this.redis.connected || false;
       this.redis.on("connect", function() {
