@@ -246,18 +246,55 @@ Returns:
 
 
 ## Not implemented yet
-
-
     
 ### setQueueAttributes
 
 Sets queue parameters.
 
 
-
 ## Changes
 
 see the [CHANGELOG](https://github.com/smrchy/rsmq/blob/master/CHANGELOG.md)
+
+
+## More NodeJS and Redis projects?
+
+Check out my projects which are based on NodeJS and Redis as a datastore:
+
+### [RSMQ: Really Simple Message Queue](https://github.com/smrchy/rsmq)
+
+If you run a Redis server and currently use Amazon SQS or a similar message queue you might as well use this fast little replacement. **Using a shared Redis server multiple NodeJS processes can send / receive messages.**
+
+* Lightweight: **Just Redis**. Every client can send and receive messages via a shared Redis server. 
+* Guaranteed **delivery of a message to exactly one recipient** within a messages visibility timeout.
+* No security: **Like memcached**. Only for internal use in trusted environments.
+* Similar to Amazon SQS (with some differences)
+* Optional **RESTful interface** via [REST-rsmq](https://github.com/smrchy/rest-rsmq)
+* [and more...](https://github.com/smrchy/rsmq)
+
+
+### [Redis-Tagging](https://github.com/smrchy/redis-tagging)
+
+A NodeJS helper library to make tagging of items in any legacy database (SQL or NoSQL) easy and fast. Redis is used to store tag-item associations and to allow fast queries and paging over large sets of tagged items.
+
+* **Maintains order** of tagged items
+* **Unions** and **intersections** while maintaining the order
+* Counters for each tag
+* **Fast paging** over results with `limit` and `offset`
+* Optional **RESTful interface** via [REST-tagging](https://github.com/smrchy/rest-tagging)
+* [Read more...](https://github.com/smrchy/redis-tagging)
+
+
+### [Redis-Sessions](https://github.com/smrchy/redis-sessions)
+
+This is a NodeJS module to keep sessions in a Redis datastore and add some useful methods.
+
+The main purpose of this module is to **generalize sessions across application server platforms**. We use nginx reverse proxy to route parts of a website to a NodeJS server and other parts could be Python, .net, PHP, Coldfusion or Java servers. You can then use [rest-sessions](https://github.com/smrchy/rest-sessions) to access the same sessions on all app server via a REST interface.
+
+* Standard features: Set, update, delete a single session
+* Advanced features: List / delete all sessions, all sessions of a single UserID
+* Activity in the last *n* seconds
+* [and more...](https://github.com/smrchy/redis-sessions)
 
 ## The MIT License (MIT)
 
