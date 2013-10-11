@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.3.5
+
+* Make `hiredis` optional.
+
 ## 0.3.4
 
 * Added support for [https://github.com/mranney/node_redis#rediscreateclientport-host-options](redis.createClient) `options` object.
