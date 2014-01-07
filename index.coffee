@@ -254,8 +254,8 @@ class RedisSMQ extends EventEmitter
 					vt: parseInt(resp[0][0], 10)
 					delay: parseInt(resp[0][1], 10)
 					maxsize: parseInt(resp[0][2], 10)
-					totalrecv: parseInt(resp[0][3], 10)
-					totalsent: parseInt(resp[0][4], 10)
+					totalrecv: parseInt(resp[0][3], 10) or 0
+					totalsent: parseInt(resp[0][4], 10) or 0
 					created: parseInt(resp[0][5], 10)
 					modified: parseInt(resp[0][6], 10)
 					msgs: resp[1]
