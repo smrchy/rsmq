@@ -1,4 +1,4 @@
-_ = require "underscore"
+_ = require "lodash"
 should = require "should"
 async = require "async"
 RedisSMQ = require "../index" 
@@ -132,7 +132,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 			rsmq.listQueues (err, resp) ->
 				should.not.exist(err)
 				resp.length.should.equal(1)
-				resp.should.include(queue1)
+				resp.should.containEql(queue1)
 				done()
 				return
 			return
@@ -151,8 +151,8 @@ describe 'Redis-Simple-Message-Queue Test', ->
 			rsmq.listQueues (err, resp) ->
 				should.not.exist(err)
 				resp.length.should.equal(2)
-				resp.should.include(queue1)
-				resp.should.include(queue2)
+				resp.should.containEql(queue1)
+				resp.should.containEql(queue2)
 				done()
 				return
 			return
@@ -161,6 +161,71 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		it 'Should fail: GetQueueAttributes of bogus queue', (done) ->
 			rsmq.getQueueAttributes {qname:"sdfsdfsdf"}, (err, resp) ->
 				err.message.should.equal("Queue not found")
+				done()
+				return
+			return
+
+
+		it 'Should fail: setQueueAttributes of bogus queue with no supplied attributes', (done) ->
+			rsmq.setQueueAttributes {qname:"kjdsfh3h"}, (err, resp) ->
+				err.message.should.equal("No attribute was supplied")
+				done()
+				return
+			return
+
+		it 'Should fail: setQueueAttributes of bogus queue with supplied attributes', (done) ->
+			rsmq.setQueueAttributes {qname:"kjdsfh3h",vt: 1000}, (err, resp) ->
+				err.message.should.equal("Queue not found")
+				done()
+				return
+			return
+
+		it 'setQueueAttributes: Should return the queue with a new vt attribute', (done) ->
+			rsmq.setQueueAttributes {qname: queue1, vt: 1234}, (err, resp) ->
+				resp.vt.should.equal(1234)
+				resp.delay.should.equal(0)
+				resp.maxsize.should.equal(65536)
+				done()
+				return
+			return
+
+		it 'setQueueAttributes: Should return the queue with a new delay attribute', (done) ->
+			rsmq.setQueueAttributes {qname: queue1, delay: 7}, (err, resp) ->
+				resp.vt.should.equal(1234)
+				resp.delay.should.equal(7)
+				resp.maxsize.should.equal(65536)
+				done()
+				return
+			return
+
+		it 'setQueueAttributes: Should return the queue with a new maxsize attribute', (done) ->
+			rsmq.setQueueAttributes {qname: queue1, maxsize: 2048}, (err, resp) ->
+				resp.vt.should.equal(1234)
+				resp.delay.should.equal(7)
+				resp.maxsize.should.equal(2048)
+				done()
+				return
+			return
+
+		it 'setQueueAttributes: Should return the queue with a new attribute', (done) ->
+			rsmq.setQueueAttributes {qname: queue1, maxsize: 65536, vt: 30, delay: 0}, (err, resp) ->
+				resp.vt.should.equal(30)
+				resp.delay.should.equal(0)
+				resp.maxsize.should.equal(65536)
+				done()
+				return
+			return
+
+		it 'Should fail:setQueueAttributes: Should not accept too small maxsize', (done) ->
+			rsmq.setQueueAttributes {qname: queue1, maxsize: 50}, (err, resp) ->
+				err.message.should.equal("maxsize must be between 1024 and 65536")
+				done()
+				return
+			return
+
+		it 'Should fail:setQueueAttributes: Should not accept negative value', (done) ->
+			rsmq.setQueueAttributes {qname: queue1, vt: -5}, (err, resp) ->
+				err.message.should.equal("vt must be between 0 and 9999999")
 				done()
 				return
 			return

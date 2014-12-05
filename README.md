@@ -1,11 +1,11 @@
-# rsmq
+# Redis Simple Message Queue for Node.js - RSMQ
 
-A really simple message queue based on Redis
+A lightweight message queue for Node.js that requires no dedicated queue server. Just a Redis server.
 
 [![Build Status](https://secure.travis-ci.org/smrchy/rsmq.png?branch=master)](http://travis-ci.org/smrchy/rsmq)
+[![Dependency Status](https://david-dm.org/smrchy/rsmq.svg)](https://david-dm.org/smrchy/rsmq)
 
-**tl;dr:** If you run a Redis server and currently use Amazon SQS or a similar message queue you might as well use this fast little replacement. Using a shared Redis server multiple NodeJS processes can send / receive messages. The `receiveMessage` Method uses a Redis Lua script to ensure a message is only delivered to a single recipient.
-
+**tl;dr:** If you run a Redis server and currently use Amazon SQS or a similar message queue you might as well use this fast little replacement. Using a shared Redis server multiple Node.js processes can send / receive messages.
 
 ## Features
 
@@ -18,14 +18,14 @@ A really simple message queue based on Redis
   * No ReceiptHandle. A message is deleted by the message id. A message can be deleted if you store the id that is returned from the `sendMessage` method.
   * No MessageRetentionPeriod: Messages stay in the queue unless deleted.
   * No bulk operations (SendMessageBatch, DeleteMessageBatch)
-  * Some AWS specific features are missing
+  * Some SQS specific features are missing
 * Optional RESTful interface via [rest-rsmq](https://github.com/smrchy/rest-rsmq)  
   
   
 ## Usage
 
 * After creating a queue you can send messages to that queue.
-* The messages will be handled in a **FIFO** (first in first out) manner unless specified differently with a delay.
+* The messages will be handled in a **FIFO** (first in first out) manner unless specified with a delay.
 * Every message has a unique `id` that you can use to delete the message. 
 * The `sendMessage` method will return the `id` for a sent message.
 * The `receiveMessage` method will return an `id` along with the message and some stats.
@@ -192,7 +192,7 @@ Returns an object:
 * `created`: Timestamp (epoch in seconds) when the queue was created
 * `modified`: Timestamp (epoch in seconds) when the queue was last modified with `setQueueAttributes`
 * `msgs`: Current number of messages in the queue
-* `hiddenmsgs`: Current number of hidden / not visible messages. A message can hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
+* `hiddenmsgs`: Current number of hidden / not visible messages. A message can be hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
 
 
 
@@ -242,14 +242,32 @@ Returns:
 * `id`: The internal message id.
 
 
-
-
-
-## Not implemented yet
     
 ### setQueueAttributes
 
 Sets queue parameters.
+
+Parameters:
+
+* `qname` (String): The Queue name.
+* `vt` (Number): *optional* * The length of time, in seconds, that a message received from a queue will be invisible to other receiving components when they ask to receive messages. Allowed values: 0-9999999 (around 115 days)
+* `delay` (Number): *optional* The time in seconds that the delivery of all new messages in the queue will be delayed. Allowed values: 0-9999999 (around 115 days)
+* `maxsize` (Number): *optional* The maximum message size in bytes. Allowed values: 1024-65536
+
+Note: At least one attribute (vt, delay, maxsize) must be supplied. Only attributes that are supplied will be modified.
+
+Returns an object:
+
+* `vt`: The visibility timeout for the queue in seconds
+* `delay`: The delay for new messages in seconds
+* `maxsize`: The maximum size of a message in bytes
+* `totalrecv`: Total number of messages received from the queue
+* `totalsent`: Total number of messages sent to the queue
+* `created`: Timestamp (epoch in seconds) when the queue was created
+* `modified`: Timestamp (epoch in seconds) when the queue was last modified with `setQueueAttributes`
+* `msgs`: Current number of messages in the queue
+* `hiddenmsgs`: Current number of hidden / not visible messages. A message can be hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
+
 
 
 ## Changes
@@ -257,25 +275,14 @@ Sets queue parameters.
 see the [CHANGELOG](https://github.com/smrchy/rsmq/blob/master/CHANGELOG.md)
 
 
-## More NodeJS and Redis projects?
+## More Node.js and Redis projects?
 
-Check out my projects which are based on NodeJS and Redis as a datastore:
-
-### [RSMQ: Really Simple Message Queue](https://github.com/smrchy/rsmq)
-
-If you run a Redis server and currently use Amazon SQS or a similar message queue you might as well use this fast little replacement. **Using a shared Redis server multiple NodeJS processes can send / receive messages.**
-
-* Lightweight: **Just Redis**. Every client can send and receive messages via a shared Redis server. 
-* Guaranteed **delivery of a message to exactly one recipient** within a messages visibility timeout.
-* No security: **Like memcached**. Only for internal use in trusted environments.
-* Similar to Amazon SQS (with some differences)
-* Optional **RESTful interface** via [REST-rsmq](https://github.com/smrchy/rest-rsmq)
-* [and more...](https://github.com/smrchy/rsmq)
+Check out our other projects which are based on Node.js and Redis as a datastore:
 
 
 ### [Redis-Tagging](https://github.com/smrchy/redis-tagging)
 
-A NodeJS helper library to make tagging of items in any legacy database (SQL or NoSQL) easy and fast. Redis is used to store tag-item associations and to allow fast queries and paging over large sets of tagged items.
+A Node.js helper library to make tagging of items in any legacy database (SQL or NoSQL) easy and fast. Redis is used to store tag-item associations and to allow fast queries and paging over large sets of tagged items.
 
 * **Maintains order** of tagged items
 * **Unions** and **intersections** while maintaining the order
@@ -287,9 +294,9 @@ A NodeJS helper library to make tagging of items in any legacy database (SQL or 
 
 ### [Redis-Sessions](https://github.com/smrchy/redis-sessions)
 
-This is a NodeJS module to keep sessions in a Redis datastore and add some useful methods.
+This is a Node.js module to keep sessions in a Redis datastore and add some useful methods.
 
-The main purpose of this module is to **generalize sessions across application server platforms**. We use nginx reverse proxy to route parts of a website to a NodeJS server and other parts could be Python, .net, PHP, Coldfusion or Java servers. You can then use [rest-sessions](https://github.com/smrchy/rest-sessions) to access the same sessions on all app server via a REST interface.
+The main purpose of this module is to **generalize sessions across application server platforms**. We use nginx reverse proxy to route parts of a website to a Node.js server and other parts could be Python, .net, PHP, Coldfusion or Java servers. You can then use [rest-sessions](https://github.com/smrchy/rest-sessions) to access the same sessions on all app server via a REST interface.
 
 * Standard features: Set, update, delete a single session
 * Advanced features: List / delete all sessions, all sessions of a single UserID
@@ -298,7 +305,7 @@ The main purpose of this module is to **generalize sessions across application s
 
 ## The MIT License (MIT)
 
-Copyright © 2013 Patrick Liess, http://www.tcs.de
+Copyright © Patrick Liess, http://www.tcs.de
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

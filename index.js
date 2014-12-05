@@ -24,7 +24,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
   crypto = require("crypto");
 
-  _ = require("underscore");
+  _ = require("lodash");
 
   RedisInst = require("redis");
 
@@ -41,6 +41,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       }
       this._initErrors = __bind(this._initErrors, this);
       this._handleError = __bind(this._handleError, this);
+      this.setQueueAttributes = __bind(this.setQueueAttributes, this);
       this.sendMessage = __bind(this.sendMessage, this);
       this._receiveMessage = __bind(this._receiveMessage, this);
       this.receiveMessage = __bind(this.receiveMessage, this);
@@ -392,6 +393,52 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       });
     };
 
+    RedisSMQ.prototype.setQueueAttributes = function(options, cb) {
+      var item, k, key, props, _i, _len,
+        _this = this;
+      props = ["vt", "maxsize", "delay"];
+      k = [];
+      for (_i = 0, _len = props.length; _i < _len; _i++) {
+        item = props[_i];
+        if (options[item] != null) {
+          k.push(item);
+        }
+      }
+      if (!k.length) {
+        this._handleError(cb, "noAttributeSupplied");
+        return;
+      }
+      if (this._validate(options, ["qname"].concat(k), cb) === false) {
+        return;
+      }
+      key = "" + this.redisns + options.qname;
+      this._getQueue(options.qname, false, function(err, q) {
+        if (err) {
+          _this._handleError(cb, err);
+          return;
+        }
+        _this.redis.time(function(err, resp) {
+          var mc, _j, _len1;
+          if (err) {
+            _this._handleError(cb, err);
+            return;
+          }
+          mc = [["hsetnx", "" + _this.redisns + options.qname + ":Q", "modified", resp[0]]];
+          for (_j = 0, _len1 = k.length; _j < _len1; _j++) {
+            item = k[_j];
+            mc.push(["hset", "" + _this.redisns + options.qname + ":Q", item, options[item]]);
+          }
+          _this.redis.multi(mc).exec(function(err, resp) {
+            if (err) {
+              _this._handleError(cb, err);
+              return;
+            }
+            _this.getQueueAttributes(options, cb);
+          });
+        });
+      });
+    };
+
     RedisSMQ.prototype._formatZeroPad = function(num, count) {
       return ((Math.pow(10, count) + num) + "").substr(1);
     };
@@ -485,6 +532,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
     };
 
     RedisSMQ.prototype.ERRORS = {
+      "noAttributeSupplied": "No attribute was supplied",
       "missingParameter": "No <%= item %> supplied",
       "invalidFormat": "Invalid <%= item %> format",
       "invalidValue": "<%= item %> must be between <%= min %> and <%= max %>",

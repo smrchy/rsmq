@@ -15,7 +15,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 ###
 
 crypto = require "crypto"
-_ = require "underscore"
+_ = require "lodash"
 RedisInst = require "redis"
 
 EventEmitter = require( "events" ).EventEmitter
@@ -402,7 +402,6 @@ class RedisSMQ extends EventEmitter
 			if err
 				@_handleError(cb, err)
 				return
-
 			# Now that we got the default queue settings
 			options.delay = options.delay ? q.delay
 			
@@ -433,6 +432,41 @@ class RedisSMQ extends EventEmitter
 			return
 		return
 
+	setQueueAttributes: (options, cb) =>
+		props = ["vt", "maxsize", "delay"]
+		k = []
+		for item in props
+			if options[item]?
+				k.push(item)
+		# Not a single key was supplied
+		if not k.length
+			@_handleError(cb, "noAttributeSupplied")
+			return
+		if @_validate(options, ["qname"].concat(k), cb) is false
+			return
+		key = "#{@redisns}#{options.qname}"
+		@_getQueue options.qname, false, (err, q) =>
+			if err
+				@_handleError(cb, err)
+				return
+			@redis.time (err, resp) =>
+				if err
+					@_handleError(cb, err)
+					return
+				mc = [
+					["hsetnx", "#{@redisns}#{options.qname}:Q", "modified", resp[0]]
+				]
+				for item in k
+					mc.push(["hset", "#{@redisns}#{options.qname}:Q", item, options[item]])
+				@redis.multi(mc).exec (err, resp) =>
+					if err
+						@_handleError(cb, err)
+						return
+					@getQueueAttributes options, cb
+					return
+				return
+			return
+		return
 
 
 	# Helpers
@@ -496,6 +530,7 @@ class RedisSMQ extends EventEmitter
 
 
 	ERRORS:
+		"noAttributeSupplied": "No attribute was supplied"
 		"missingParameter": "No <%= item %> supplied"
 		"invalidFormat": "Invalid <%= item %> format"
 		"invalidValue": "<%= item %> must be between <%= min %> and <%= max %>"

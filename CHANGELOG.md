@@ -1,5 +1,13 @@
 # CHANGELOG for rsmq
 
+## 0.3.8
+
+* implemented `setQueueAttributes`
+* switched from underscore to lodash
+* added Travis test for Node.js 0.11
+* updated the docs
+* added tests for `setQueueAttributes`
+
 ## 0.3.5
 
 * Make `hiredis` optional.
