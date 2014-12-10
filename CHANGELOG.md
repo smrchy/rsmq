@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.3.9 
+
+* Added logo to README.md
+
 ## 0.3.8
 
 * implemented `setQueueAttributes`

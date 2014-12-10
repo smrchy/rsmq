@@ -1,3 +1,5 @@
+![RSMQ: Redis Simple Message Queue for Node.js](https://img.webmart.de/rsmq_wide.png)
+
 # Redis Simple Message Queue for Node.js - RSMQ
 
 A lightweight message queue for Node.js that requires no dedicated queue server. Just a Redis server.
