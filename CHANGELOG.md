@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.3.11
+
+* Docs
+
 ## 0.3.10
 
 * Docs
