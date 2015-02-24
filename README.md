@@ -11,16 +11,15 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 
 ## Features
 
-* Lightweight: **Just Redis**. Every client can send and receive messages via a shared Redis server. 
+* Lightweight: **Just Redis** and ~500 lines of javascript.
 * Guaranteed **delivery of a message to exactly one recipient** within a messages visibility timeout.
-* No security: **Like memcached**. Only for internal use in trusted environments.
+* Received messages that are not deleted will reappear after the visibility timeout.
 * [Test coverage](http://travis-ci.org/smrchy/rsmq)
-* Similar to Amazon SQS (Simple Queue Service) - with some differences:
-  * Durability depends on your Redis setup.
-  * No ReceiptHandle. A message is deleted by the message id. A message can be deleted if you store the id that is returned from the `sendMessage` method.
+* Similar to Amazon SQS - with some differences:
+  * No ReceiptHandle. A message is deleted by the message id. The message id is returned by the `sendMessage` and `receiveMessage` method.
   * No MessageRetentionPeriod: Messages stay in the queue unless deleted.
-  * No bulk operations (SendMessageBatch, DeleteMessageBatch)
-  * Some SQS specific features are missing
+  * No bulk operations (SendMessageBatch, DeleteMessageBatch).
+  * Some SQS specific features are missing.
 * Optional RESTful interface via [rest-rsmq](https://github.com/smrchy/rest-rsmq)  
   
   
@@ -39,7 +38,7 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 
 `npm install rsmq`
 
-
+s
 ## Example
 
 ### Initialize
@@ -277,33 +276,23 @@ Returns an object:
 see the [CHANGELOG](https://github.com/smrchy/rsmq/blob/master/CHANGELOG.md)
 
 
-## More Node.js and Redis projects?
+## Other projects
 
-Check out our other projects which are based on Node.js and Redis as a datastore:
+|Name|Description|
+|:--|:--|
+|[**node-cache**](https://github.com/tcs-de/nodecache)|Simple and fast Node.js internal caching. Node internal in memory cache like memcached.|
+|[**redis-tagging**](https://github.com/smrchy/redis-tagging)|A Node.js helper library to make tagging of items in any legacy database (SQL or NoSQL) easy and fast.|
+|[**redis-sessions**](https://github.com/smrchy/redis-sessions)|An advanced session store for Node.js and Redis|
+|[**rsmq-worker**](https://github.com/mpneuried/rsmq-worker)|Helper to implement a worker based on [RSMQ (Redis Simple Message Queue)](https://github.com/smrchy/rsmq).|
+|[**redis-notifications**](https://github.com/mpneuried/redis-notifications)|A Redis based notification engine. It implements the rsmq-worker to safely create notifications and recurring reports.|
+|[**task-queue-worker**](https://github.com/smrchy/task-queue-worker)|A powerful tool for background processing of tasks that are run by making standard http requests.|
+|[**obj-schema**](https://github.com/mpneuried/obj-schema)|Simple module to validate an object by a predefined schema|
+|[**connect-redis-sessions**](https://github.com/mpneuried/connect-redis-sessions)|A connect or express middleware to use [redis sessions](https://github.com/smrchy/redis-sessions) that lets you handle multiple sessions per user_id.|
+|[**systemhealth**](https://github.com/mpneuried/systemhealth)|Node module to run simple custom checks for your machine or it's connections. It will use [redis-heartbeat](https://github.com/mpneuried/redis-heartbeat) to send the current state to Redis.|
 
-
-### [Redis-Tagging](https://github.com/smrchy/redis-tagging)
-
-A Node.js helper library to make tagging of items in any legacy database (SQL or NoSQL) easy and fast. Redis is used to store tag-item associations and to allow fast queries and paging over large sets of tagged items.
-
-* **Maintains order** of tagged items
-* **Unions** and **intersections** while maintaining the order
-* Counters for each tag
-* **Fast paging** over results with `limit` and `offset`
-* Optional **RESTful interface** via [REST-tagging](https://github.com/smrchy/rest-tagging)
-* [Read more...](https://github.com/smrchy/redis-tagging)
-
-
-### [Redis-Sessions](https://github.com/smrchy/redis-sessions)
-
-This is a Node.js module to keep sessions in a Redis datastore and add some useful methods.
-
-The main purpose of this module is to **generalize sessions across application server platforms**. We use nginx reverse proxy to route parts of a website to a Node.js server and other parts could be Python, .net, PHP, Coldfusion or Java servers. You can then use [rest-sessions](https://github.com/smrchy/rest-sessions) to access the same sessions on all app server via a REST interface.
-
-* Standard features: Set, update, delete a single session
-* Advanced features: List / delete all sessions, all sessions of a single UserID
-* Activity in the last *n* seconds
-* [and more...](https://github.com/smrchy/redis-sessions)
+|[**soyer**](https://github.com/mpneuried/soyer)|Soyer is small lib for serverside use of Google Closure Templates with node.js.|
+|[**grunt-soy-compile**](https://github.com/mpneuried/grunt-soy-compile)|Compile Goggle Closure Templates (SOY) templates including the handling of XLIFF language files.|
+|[**backlunr**](https://github.com/mpneuried/backlunr)|A solution to bring Backbone Collections together with the browser fulltext search engine Lunr.js|
 
 ## The MIT License (MIT)
 

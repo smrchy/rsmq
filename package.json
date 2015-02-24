@@ -1,7 +1,8 @@
 {
     "name": "rsmq",
     "description": "A really simple message queue based on Redis",
-    "version": "0.3.9",
+    "version": "0.3.10",
+    "license": "MIT",
     "author": "P. Liess <smrchy+npm@gmail.com>",
     "engines": {
 		"node": "> 0.8.10"
@@ -24,13 +25,16 @@
 	"keywords": [
 		"queue",
 		"messagequeue",
-		"sqs",
-		"aws",
+		"jobs",
+		"message-queue",
 		"redis"
 	],
 	"repository" : {
 		"type": "git",
 		"url": "http://github.com/smrchy/rsmq.git"
+	},
+	"bugs": {
+		"url": "https://github.com/smrchy/rsmq/issues"
 	}
 
 }
