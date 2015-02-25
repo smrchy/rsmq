@@ -1,0 +1,13 @@
+node_modules/
+npm-debug.log
+dump.rdb
+*.profile
+*.lock
+*.conflict
+*.DS_Store
+
+.project
+.settings
+.idea
+
+*.sublime*
