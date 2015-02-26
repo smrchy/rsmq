@@ -38,7 +38,6 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 
 `npm install rsmq`
 
-s
 ## Example
 
 ### Initialize
