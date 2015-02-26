@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.3.13
+
+* Fix `hiddenmsgs` display in `getQueueAttributes`
+
 ## 0.3.12
 
 * Added `quit` method

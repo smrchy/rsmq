@@ -244,7 +244,7 @@ class RedisSMQ extends EventEmitter
 			mc = [
 				["hmget", "#{key}:Q", "vt", "delay", "maxsize", "totalrecv", "totalsent", "created", "modified"]
 				["zcard", key]
-				["zcount", key, "-inf", resp[0] + "000"]
+				["zcount", key, resp[0] + "000", "+inf"]
 			]
 			@redis.multi(mc).exec (err, resp) =>
 				if err
