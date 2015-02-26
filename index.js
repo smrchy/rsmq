@@ -53,6 +53,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       this._changeMessageVisibility = __bind(this._changeMessageVisibility, this);
       this.changeMessageVisibility = __bind(this.changeMessageVisibility, this);
       this._getQueue = __bind(this._getQueue, this);
+      this.quit = __bind(this.quit, this);
       opts = _.extend({
         host: "127.0.0.1",
         port: 6379,
@@ -84,6 +85,10 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       this._initErrors();
       return;
     }
+
+    RedisSMQ.prototype.quit = function() {
+      this.redis.quit();
+    };
 
     RedisSMQ.prototype._getQueue = function(qname, uid, cb) {
       var mc,

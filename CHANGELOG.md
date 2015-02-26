@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.3.12
+
+* Added `quit` method
+
 ## 0.3.11
 
 * Docs

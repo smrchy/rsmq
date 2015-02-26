@@ -269,7 +269,11 @@ Returns an object:
 * `msgs`: Current number of messages in the queue
 * `hiddenmsgs`: Current number of hidden / not visible messages. A message can be hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
 
+    
+### quit
 
+Disconnect the redis client.
+This is only useful if you are using rsmq within a script and want node to be able to exit.
 
 ## Changes
 

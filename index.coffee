@@ -71,6 +71,11 @@ class RedisSMQ extends EventEmitter
 		@_initErrors()
 		return
 
+	# kill the connection of the redis client, so your node script will be able to exit.
+	quit: =>
+		@redis.quit()
+		return
+
 	_getQueue: (qname, uid, cb) =>
 		mc = [
 			["hmget", "#{@redisns}#{qname}:Q", "vt", "delay", "maxsize"]
