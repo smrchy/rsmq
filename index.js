@@ -134,7 +134,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           _this._changeMessageVisibility(options, q, cb);
           return;
         }
-        changeMessageVisibility.on('scriptload:changeMessageVisibility', function() {
+        _this.on('scriptload:changeMessageVisibility', function() {
           _this._changeMessageVisibility(options, q, cb);
         });
       });
