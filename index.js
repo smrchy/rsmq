@@ -242,7 +242,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
           _this._handleError(cb, err);
           return;
         }
-        mc = [["hmget", "" + key + ":Q", "vt", "delay", "maxsize", "totalrecv", "totalsent", "created", "modified"], ["zcard", key], ["zcount", key, "-inf", resp[0] + "000"]];
+        mc = [["hmget", "" + key + ":Q", "vt", "delay", "maxsize", "totalrecv", "totalsent", "created", "modified"], ["zcard", key], ["zcount", key, resp[0] + "000", "+inf"]];
         _this.redis.multi(mc).exec(function(err, resp) {
           var o;
           if (err) {
