@@ -128,7 +128,7 @@ class RedisSMQ extends EventEmitter
 			if @changeMessageVisibility_sha1
 				@_changeMessageVisibility(options, q, cb)
 				return
-			changeMessageVisibility.on 'scriptload:changeMessageVisibility', =>
+			@on 'scriptload:changeMessageVisibility', =>
 				@_changeMessageVisibility(options, q, cb)
 				return
 			return
