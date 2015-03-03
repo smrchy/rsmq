@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.3.14
+
+* Fix `changeMessageVisibility` syntax fix. Failed if this method will be called as first call.
+
 ## 0.3.13
 
 * Fix `hiddenmsgs` display in `getQueueAttributes`
