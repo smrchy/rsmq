@@ -1,5 +1,10 @@
 # CHANGELOG for rsmq
 
+## 0.3.15
+
+* Added LICENSE.md 
+* Docs (added Links to modules)
+
 ## 0.3.14
 
 * Fix `changeMessageVisibility` syntax fix. Failed if this method will be called as first call.
