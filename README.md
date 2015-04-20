@@ -38,6 +38,16 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 
 `npm install rsmq`
 
+
+## Modules for RSMQ
+
+To keep the core of *RSMQ* small additional functionality is available as modules:
+
+* [**rsmq-worker**](https://github.com/mpneuried/rsmq-worker) Helper to implement a worker with RSMQ.
+* [**rest-rsqm**](https://github.com/smrchy/rest-rsmq) A RESTful interface for RSMQ.
+* [**rsmq-cli**](https://github.com/mpneuried/rsmq-cli) A command-line interface / Terminal client for RSMQ.
+
+
 ## Example
 
 ### Initialize
@@ -53,15 +63,6 @@ Parameters for RedisSMQ via an *options* object:
 * `options` (Object): *optional (Default: {})* The Redis [https://github.com/mranney/node_redis#rediscreateclientport-host-options](redis.createClient) `options` object. 
 * `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
 * `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by RSMQ
-
-
-### Modules for RSMQ
-
-To keep the core of *RSMQ* small additional functionality is available as modules:
-
-* [**rsmq-worker**](https://github.com/mpneuried/rsmq-worker) Helper to implement a worker with RSMQ.
-* [**rest-rsqm**](https://github.com/smrchy/rest-rsmq) A RESTful interface for RSMQ.
-* [**rsmq-cli**](https://github.com/mpneuried/rsmq-cli) A command-line interface / Terminal client for RSMQ.
 
 
 ### Create a queue
