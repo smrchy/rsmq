@@ -12,6 +12,7 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 ## Features
 
 * Lightweight: **Just Redis** and ~500 lines of javascript.
+* Speed: Send and receive 1000+ messages per second on an average machine. It's **just Redis**.
 * Guaranteed **delivery of a message to exactly one recipient** within a messages visibility timeout.
 * Received messages that are not deleted will reappear after the visibility timeout.
 * [Test coverage](http://travis-ci.org/smrchy/rsmq)
