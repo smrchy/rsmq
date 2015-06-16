@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.3.16
+
+* Docs (Redis 2.6+ version requirement)
+
 ## 0.3.15
 
 * Added LICENSE.md 

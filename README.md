@@ -15,14 +15,12 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 * Guaranteed **delivery of a message to exactly one recipient** within a messages visibility timeout.
 * Received messages that are not deleted will reappear after the visibility timeout.
 * [Test coverage](http://travis-ci.org/smrchy/rsmq)
-* Similar to Amazon SQS - with some differences:
-  * No ReceiptHandle. A message is deleted by the message id. The message id is returned by the `sendMessage` and `receiveMessage` method.
-  * No MessageRetentionPeriod: Messages stay in the queue unless deleted.
-  * No bulk operations (SendMessageBatch, DeleteMessageBatch).
-  * Some SQS specific features are missing.
+* A message is deleted by the message id. The message id is returned by the `sendMessage` and `receiveMessage` method.
+* Messages stay in the queue unless deleted.
 * Optional RESTful interface via [rest-rsmq](https://github.com/smrchy/rest-rsmq)  
   
-  
+**Note:** RSMQ uses the Redis EVAL command (LUA scripts) so the minimum Redis version is 2.6+. 
+
 ## Usage
 
 * After creating a queue you can send messages to that queue.
