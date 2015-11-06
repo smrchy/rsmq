@@ -1,5 +1,12 @@
 # CHANGELOG for rsmq
 
+## 0.4.0
+
+* Updated `redis` / `hiredis` modules.
+* Node 0.8.x is no longer supported.
+* Removed Travis tests for iojs
+* Travis tests for Node 4.1 and 5.0
+
 ## 0.3.16
 
 * Docs (Redis 2.6+ version requirement)
