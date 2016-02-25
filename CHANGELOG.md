@@ -1,5 +1,12 @@
 # CHANGELOG for rsmq
 
+## 0.6.0
+
+* Added `popMessage` method
+* Fix #23: Use of external Redis instance
+* Added Tests for `popMessage`
+* Use current version of lodash (4.5.1) and redis (2.4.2)
+
 ## 0.4.0
 
 * Updated `redis` / `hiredis` modules.

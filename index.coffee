@@ -5,7 +5,7 @@ A Really Simple Message Queue based on Redis
 
 The MIT License (MIT)
 
-Copyright © 2013 Patrick Liess, http://www.tcs.de
+Copyright © 2013-2016 Patrick Liess, http://www.tcs.de
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -52,12 +52,18 @@ class RedisSMQ extends EventEmitter
 			@redis = RedisInst.createClient(opts.port, opts.host, opts.options)
 
 		@connected = @redis.connected or false
+
+		# If external client is used it might alrdy be connected. So we check here:
+		if @connected
+			@emit( "connect" )
+			@initScript()
+
+		# Once the connection is up 
 		@redis.on "connect", =>
 			@connected = true
 			@emit( "connect" )
 			@initScript()
 			return
-
 
 		@redis.on "error", ( err )=>
 			if err.message.indexOf( "ECONNREFUSED" )
@@ -135,7 +141,6 @@ class RedisSMQ extends EventEmitter
 			
 		return
 
-
 	_changeMessageVisibility: (options, q, cb) =>
 		@redis.evalsha @changeMessageVisibility_sha1, 3, "#{@redisns}#{options.qname}", options.id, q.ts + options.vt * 1000, (err, resp) =>
 			if err
@@ -144,7 +149,6 @@ class RedisSMQ extends EventEmitter
 			cb(null, resp)
 			return
 		return
-
 
 	createQueue: (options, cb) =>
 		options.vt 		= options.vt ? 30
@@ -185,7 +189,6 @@ class RedisSMQ extends EventEmitter
 				return
 			return
 		return
-
 
 	deleteMessage: (options, cb) =>
 		if @_validate(options, ["qname","id"],cb) is false
@@ -271,8 +274,59 @@ class RedisSMQ extends EventEmitter
 			return
 		return
 
+	_handleReceivedMessage: (cb) ->
+		(err, resp) =>
+			if err
+				@_handleError(cb, err)
+				return
+			if not resp.length
+				cb(null, {})
+				return
+			o =
+				id:		 	resp[0]
+				message:	resp[1]
+				rc:			resp[2]
+				fr:			Number(resp[3])
+				sent:		parseInt(parseInt(resp[0][0...10],36)/1000)
+			cb(null, o)
+			return
 
 	initScript: (cb) ->
+		# The popMessage LUA Script
+		# 
+		# Parameters:
+		#
+		# KEYS[1]: the zset key
+		# KEYS[2]: the current time in ms
+		#
+		# * Find a message id
+		# * Get the message
+		# * Increase the rc (receive count)
+		# * Use hset to set the fr (first receive) time
+		# * Return the message and the counters
+		#
+		# Returns:
+		# 
+		# {id, message, rc, fr}
+
+		script_popMessage = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")
+			if #msg == 0 then
+				return {}
+			end
+			redis.call("HINCRBY", KEYS[1] .. ":Q", "totalrecv", 1)
+			local mbody = redis.call("HGET", KEYS[1] .. ":Q", msg[1])
+			local rc = redis.call("HINCRBY", KEYS[1] .. ":Q", msg[1] .. ":rc", 1)
+			local o = {msg[1], mbody, rc}
+			if rc==1 then
+				table.insert(o, KEYS[2])
+			else			
+				local fr = redis.call("HGET", KEYS[1] .. ":Q", msg[1] .. ":fr")	
+				table.insert(o, fr)
+			end
+			redis.call("ZREM", KEYS[1], msg[1])
+			redis.call("HDEL", KEYS[1] .. ":Q", msg[1], msg[1] .. ":rc", msg[1] .. ":fr")
+			return o'
+
 		# The receiveMessage LUA Script
 		# 
 		# Parameters:
@@ -331,7 +385,17 @@ class RedisSMQ extends EventEmitter
 			redis.call("ZADD", KEYS[1], KEYS[3], KEYS[2])
 			return 1'
 
+		@redis.script "load", script_popMessage, (err, resp) =>
+			if err
+				console.log err
+				return
+			@popMessage_sha1 = resp
+			@emit('scriptload:popMessage');
+			return
 		@redis.script "load", script_receiveMessage, (err, resp) =>
+			if err
+				console.log err
+				return
 			@receiveMessage_sha1 = resp
 			@emit('scriptload:receiveMessage');
 			return
@@ -340,7 +404,6 @@ class RedisSMQ extends EventEmitter
 			@emit('scriptload:changeMessageVisibility');
 			return
 		return
-
 
 	listQueues: (cb) =>
 		@redis.smembers "#{@redisns}QUEUES", (err, resp) =>
@@ -351,6 +414,23 @@ class RedisSMQ extends EventEmitter
 			return
 		return
 
+	popMessage: (options, cb) =>
+		if @_validate(options, ["qname"],cb) is false
+			return
+
+		@_getQueue options.qname, false, (err, q) =>
+			if err
+				@_handleError(cb, err)
+				return
+			# Make really sure that the LUA script is loaded
+			if @popMessage_sha1
+				@_popMessage(options, q, cb)
+				return
+			@on 'scriptload:popMessage', =>
+				@_popMessage(options, q, cb)
+				return
+			return
+		return
 
 	receiveMessage: (options, cb) =>
 		if @_validate(options, ["qname"],cb) is false
@@ -360,7 +440,6 @@ class RedisSMQ extends EventEmitter
 			if err
 				@_handleError(cb, err)
 				return
-
 			# Now that we got the default queue settings
 			options.vt = options.vt ? q.vt
 
@@ -377,26 +456,12 @@ class RedisSMQ extends EventEmitter
 			return
 		return
 
+	_popMessage: (options, q, cb) =>
+		@redis.evalsha @popMessage_sha1, 2, "#{@redisns}#{options.qname}", q.ts, @_handleReceivedMessage(cb)
+		return
 
 	_receiveMessage: (options, q, cb) =>
-		@redis.evalsha @receiveMessage_sha1, 3, "#{@redisns}#{options.qname}", q.ts, q.ts + options.vt * 1000, (err, resp) =>
-			if err
-				@_handleError(cb, err)
-				return
-			
-			if not resp.length
-				cb(null, {})
-				return
-			o =
-				id:		 	resp[0]
-				message:	resp[1]
-				rc:			resp[2]
-				fr:			Number(resp[3])
-				sent:		parseInt(parseInt(resp[0][0...10],36)/1000)
-
-			
-			cb(null, o)
-			return
+		@redis.evalsha @receiveMessage_sha1, 3, "#{@redisns}#{options.qname}", q.ts, q.ts + options.vt * 1000, @_handleReceivedMessage(cb)
 		return
 
 	sendMessage: (options, cb) =>
@@ -473,12 +538,9 @@ class RedisSMQ extends EventEmitter
 			return
 		return
 
-
 	# Helpers
-
 	_formatZeroPad: (num, count) ->
 		((Math.pow(10, count)+num)+"").substr(1)
-
 
 	_handleError: (cb, err, data={}) =>
 		# try to create a error Object with humanized message
@@ -508,7 +570,6 @@ class RedisSMQ extends EventEmitter
 		qname:	/^([a-zA-Z0-9_-]){1,80}$/
 		id:		/^([a-zA-Z0-9:]){32}$/
 
-                    
 	_validate: (o, items, cb) ->
 		for item in items
 			switch item
@@ -532,8 +593,6 @@ class RedisSMQ extends EventEmitter
 						return false
 		return o
 
-
-
 	ERRORS:
 		"noAttributeSupplied": "No attribute was supplied"
 		"missingParameter": "No <%= item %> supplied"
@@ -543,8 +602,5 @@ class RedisSMQ extends EventEmitter
 		"messageTooLong": "Message too long"
 		"queueNotFound": "Queue not found"
 		"queueExists": "Queue exists"
-
-
-
 
 module.exports = RedisSMQ

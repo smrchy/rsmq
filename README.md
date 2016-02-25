@@ -215,6 +215,28 @@ Returns an array:
 
 
 
+### popMessage
+
+Receive the next message from the queue **and delete it**.
+
+**Important:** This method deleted the message it receives right aways. There is no way to receive the message again if something goes wrong while working on the message.
+
+Parameters:
+
+* `qname` (String): The Queue name.
+
+Returns an object:
+
+  * `message`: The message's contents.
+  * `id`: The internal message id.
+  * `sent`: Timestamp of when this message was sent / created.
+  * `fr`: Timestamp of when this message was first received.
+  * `rc`: Number of times this message was received.
+
+Note: Will return an empty object if no message is there  
+
+
+
 ### receiveMessage
 
 Receive the next message from the queue.

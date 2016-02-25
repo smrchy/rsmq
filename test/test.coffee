@@ -1,15 +1,20 @@
 _ = require "lodash"
 should = require "should"
 async = require "async"
-RedisSMQ = require "../index" 
+RedisSMQ = require "../index"
+
+RedisInst = require "redis"
+redis = RedisInst.createClient()
 
 describe 'Redis-Simple-Message-Queue Test', ->
 	rsmq = null
+	rsmq2 = null
 	queue1 = "test1"
 	queue2 = "test2"
 
 	q1m1 = null
 	q1m2 = null
+	q1m3 = null
 	q2m2 = null
 	q2msgs = {}
 
@@ -21,12 +26,16 @@ describe 'Redis-Simple-Message-Queue Test', ->
 	after (done) ->
 		done()		
 		return
-	
-
 
 	it 'get a RedisSMQ instance', (done) ->
 		rsmq = new RedisSMQ()
 		rsmq.should.be.an.instanceOf RedisSMQ
+		done()
+		return
+
+	it 'use an existing Redis Client', (done) ->
+		rsmq2 = new RedisSMQ({client: redis})
+		rsmq2.should.be.an.instanceOf RedisSMQ
 		done()
 		return
 
@@ -157,14 +166,12 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				return
 			return
 
-
 		it 'Should fail: GetQueueAttributes of bogus queue', (done) ->
 			rsmq.getQueueAttributes {qname:"sdfsdfsdf"}, (err, resp) ->
 				err.message.should.equal("Queue not found")
 				done()
 				return
 			return
-
 
 		it 'Should fail: setQueueAttributes of bogus queue with no supplied attributes', (done) ->
 			rsmq.setQueueAttributes {qname:"kjdsfh3h"}, (err, resp) ->
@@ -260,8 +267,8 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		
 		# TODO: Try to send a loooong msg
 
-		it 'Send message 1', (done) ->
-			rsmq.sendMessage {qname:queue1, message:"Hello"}, (err, resp) ->
+		it 'Send message 1 with existing Redis instance', (done) ->
+			rsmq2.sendMessage {qname:queue1, message:"Hello"}, (err, resp) ->
 				should.not.exist(err)
 				q1m1 =
 					id: resp
@@ -297,7 +304,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 
 
 		it 'Receive a message. Should return message 1', (done) ->
-			rsmq.receiveMessage {qname:queue1}, (err, resp) ->
+			rsmq2.receiveMessage {qname:queue1}, (err, resp) ->
 				resp.id.should.equal(q1m1.id)
 				done()
 				return
@@ -310,6 +317,54 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				return
 			return
 
+
+		it 'Check queue properties. Should have 2 msgs', (done) ->
+			rsmq.getQueueAttributes {qname:queue1}, (err, resp) ->
+				resp.msgs.should.equal(2)
+				resp.hiddenmsgs.should.equal(2)
+				done()
+				return
+			return
+
+		it 'Send message 3', (done) ->
+			rsmq.sendMessage {qname:queue1, message:"Booo!!"}, (err, resp) ->
+				should.not.exist(err)
+				q1m3=
+					id: resp
+					message: "Booo!!"
+				done()
+				return
+			return
+
+		it 'Check queue properties. Should have 3 msgs', (done) ->
+			rsmq.getQueueAttributes {qname:queue1}, (err, resp) ->
+				resp.msgs.should.equal(3)
+				resp.totalrecv.should.equal(2)
+				done()
+				return
+			return
+
+		it 'Pop a message. Should return message 3 and delete it', (done) ->
+			rsmq.popMessage {qname:queue1}, (err, resp) ->
+				resp.id.should.equal(q1m3.id)
+				done()
+				return
+			return
+
+		it 'Check queue properties. Should have 2 msgs', (done) ->
+			rsmq.getQueueAttributes {qname:queue1}, (err, resp) ->
+				resp.msgs.should.equal(2)
+				resp.totalrecv.should.equal(3)
+				done()
+				return
+			return
+
+		it 'Pop a message. Should not return a message', (done) ->
+			rsmq.popMessage {qname:queue1}, (err, resp) ->
+				should.not.exist(resp.id)
+				done()
+				return
+			return
 
 		it 'Should fail. Set the visibility of a non existing message', (done) ->
 			rsmq.changeMessageVisibility {qname:queue1, id:"abcdefghij0123456789abcdefghij01", vt:10}, (err, resp) ->
