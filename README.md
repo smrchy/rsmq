@@ -219,7 +219,7 @@ Returns an array:
 
 Receive the next message from the queue **and delete it**.
 
-**Important:** This method deleted the message it receives right aways. There is no way to receive the message again if something goes wrong while working on the message.
+**Important:** This method deletes the message it receives right away. There is no way to receive the message again if something goes wrong while working on the message.
 
 Parameters:
 
