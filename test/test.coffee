@@ -47,8 +47,8 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
-		it 'Should fail: Create a new queue with name longer 80 chars', (done) ->
-			rsmq.createQueue {qname:"name01234567890123456789012345678901234567890123456789012345678901234567890123456789"}, (err, resp) ->
+		it 'Should fail: Create a new queue with name longer 160 chars', (done) ->
+			rsmq.createQueue {qname:"name01234567890123456789012345678901234567890123456789012345678901234567890123456789name01234567890123456789012345678901234567890123456789012345678901234567890123456789"}, (err, resp) ->
 				err.message.should.equal("Invalid qname format")
 				done()
 				return

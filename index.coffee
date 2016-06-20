@@ -567,7 +567,7 @@ class RedisSMQ extends EventEmitter
 		return text
 	
 	_VALID:
-		qname:	/^([a-zA-Z0-9_-]){1,80}$/
+		qname:	/^([a-zA-Z0-9_-]){1,160}$/
 		id:		/^([a-zA-Z0-9:]){32}$/
 
 	_validate: (o, items, cb) ->
