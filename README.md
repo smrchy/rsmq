@@ -118,6 +118,19 @@ rsmq.deleteMessage({qname:"myqueue", id:"dhoiwpiirm15ce77305a5c3a3b0f230c6e20f09
 });
 ```
 
+### List queues
+
+
+```javascript
+rsmq.listQueues( function (err, queues) {
+	if( err ){
+		console.error( err )
+		return
+	}
+	console.log("Active queues: " + queues.join( "," ) )
+});
+```
+
   
 ## Methods
 
