@@ -1,9 +1,13 @@
 # CHANGELOG for rsmq
 
+## 0.7.2
+
+* Removed Travis tests for Node 0.12.x
+
 ## 0.7.1
 
 * Fix #30 Increased queue name limit from 80 to 160 chars.
-* Run Travis tests latest Node 6.x, 4.x and 0.12.x
+* Run Travis tests latest Node 6.x, 4.x
 
 ## 0.7.0 
 
