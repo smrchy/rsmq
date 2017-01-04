@@ -43,7 +43,7 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 To keep the core of *RSMQ* small additional functionality is available as modules:
 
 * [**rsmq-worker**](https://github.com/mpneuried/rsmq-worker) Helper to implement a worker with RSMQ.
-* [**rest-rsqm**](https://github.com/smrchy/rest-rsmq) A RESTful interface for RSMQ.
+* [**rest-rsmq**](https://github.com/smrchy/rest-rsmq) A RESTful interface for RSMQ.
 * [**rsmq-cli**](https://github.com/mpneuried/rsmq-cli) A command-line interface / Terminal client for RSMQ.
 
 
