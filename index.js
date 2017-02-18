@@ -568,7 +568,7 @@ RedisSMQ = (function(superClass) {
           break;
         case "maxsize":
           o[item] = parseInt(o[item], 10);
-          if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 1024 || o[item] > 65536) {
+          if (!o.allowLargeMessages && (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 1024 || o[item] > 65536)) {
             this._handleError(cb, "invalidValue", {
               item: item,
               min: 1024,
