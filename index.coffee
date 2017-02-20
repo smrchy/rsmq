@@ -104,7 +104,6 @@ class RedisSMQ extends EventEmitter
 				delay: parseInt(resp[0][1], 10)
 				maxsize: parseInt(resp[0][2], 10)
 				ts: ts
-
 			# Need to create a uniqueid based on the redis timestamp,
 			# the queue name and a random number.
 			# The first part is the redis time.toString(36) which
@@ -482,7 +481,8 @@ class RedisSMQ extends EventEmitter
 			if typeof options.message isnt "string"
 				@_handleError(cb, "messageNotString")
 				return
-			if options.message.length > q.maxsize
+			# Check the message size
+			if q.maxsize isnt -1 and options.message.length > q.maxsize
 				@_handleError(cb, "messageTooLong")
 				return
 
@@ -589,8 +589,10 @@ class RedisSMQ extends EventEmitter
 				when "maxsize"
 					o[item] = parseInt(o[item],10)
 					if _.isNaN(o[item]) or not _.isNumber(o[item]) or o[item] < 1024 or o[item] > 65536
-						@_handleError(cb, "invalidValue", {item:item,min:1024,max:65536})
-						return false
+						# Allow unlimited messages
+						if o[item] isnt -1
+							@_handleError(cb, "invalidValue", {item:item,min:1024,max:65536})
+							return false
 		return o
 
 	ERRORS:

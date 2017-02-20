@@ -18,6 +18,11 @@ describe 'Redis-Simple-Message-Queue Test', ->
 	q2m2 = null
 	q2msgs = {}
 
+	looong_string = ->
+		o = ""
+		while o.length < 66000
+			o = o + 'A very long Message...'	
+		return o
 
 	before (done) ->
 		done()
@@ -113,6 +118,12 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
+		it 'Should fail: Create a new queue with maxsize `-2`', (done) ->
+			rsmq.createQueue {qname:queue1, maxsize: -2}, (err, resp) ->
+				err.message.should.equal("maxsize must be between 1024 and 65536")
+				done()
+				return
+			return
 
 		it 'ListQueues: Should return empty array', (done) ->
 			rsmq.listQueues (err, resp) ->
@@ -201,6 +212,15 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				resp.vt.should.equal(1234)
 				resp.delay.should.equal(7)
 				resp.maxsize.should.equal(65536)
+				done()
+				return
+			return
+
+		it 'setQueueAttributes: Should return the queue with an umlimited maxsize', (done) ->
+			rsmq.setQueueAttributes {qname: queue1, maxsize: -1}, (err, resp) ->
+				resp.vt.should.equal(1234)
+				resp.delay.should.equal(7)
+				resp.maxsize.should.equal(-1)
 				done()
 				return
 			return
@@ -518,6 +538,30 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				return
 			return
 	
+		it 'setQueueAttributes: Should return the queue2 with an umlimited maxsize', (done) ->
+			rsmq.setQueueAttributes {qname: queue2, delay: 0, vt: 30, maxsize: -1}, (err, resp) ->
+				resp.vt.should.equal(30)
+				resp.delay.should.equal(0)
+				resp.maxsize.should.equal(-1)
+				done()
+				return
+			return
+
+		it 'Send/Recevice a longer than 64k msg to test unlimited functionality', (done) ->
+			longmsg = looong_string()
+			rsmq.sendMessage {qname: queue2, message: longmsg}, (err, resp1) ->
+				should.not.exist(err)
+				rsmq.receiveMessage {qname:queue2}, (err, resp2) ->
+					should.not.exist(err)
+					resp2.message.should.equal(longmsg)
+					resp2.id.should.equal(resp1)
+					done()
+					return
+				return
+			return
+
+
+
 		# TODO: Check different vt values on receive
 		
 	describe 'CLEANUP', ->

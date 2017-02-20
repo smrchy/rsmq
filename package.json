@@ -1,7 +1,7 @@
 {
     "name": "rsmq",
     "description": "A really simple message queue based on Redis",
-    "version": "0.7.2",
+    "version": "0.8.0",
     "license": "MIT",
     "author": "P. Liess <smrchy+npm@gmail.com>",
     "engines": {
@@ -11,11 +11,11 @@
 		"test": "mocha ./test/test.js"
 	},
 	"dependencies": {
-		"redis": "^2.5.3",
-		"lodash": "^4.6.1"
+		"redis": "^2.6.5",
+		"lodash": "^4.17.4"
 	},
 	"optionalDependencies": {
-		"hiredis": "^0.4.1"
+		"hiredis": "^0.5.0"
 	},
 	"devDependencies": {
 		"mocha": "*",

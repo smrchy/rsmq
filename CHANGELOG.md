@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.8.0
+
+* Allow unlimited message size with `maxsize=-1` option.
+
 ## 0.7.2
 
 * Removed Travis tests for Node 0.12.x
