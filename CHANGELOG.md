@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.8.1
+
+* Make sure `setQueueAttributes` does refresh `modified` field. Fix for #47. Thanks @igr
+
 ## 0.8.0
 
 * Allow unlimited message size with `maxsize=-1` option.

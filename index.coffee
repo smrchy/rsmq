@@ -524,7 +524,7 @@ class RedisSMQ extends EventEmitter
 					@_handleError(cb, err)
 					return
 				mc = [
-					["hsetnx", "#{@redisns}#{options.qname}:Q", "modified", resp[0]]
+					["hset", "#{@redisns}#{options.qname}:Q", "modified", resp[0]]
 				]
 				for item in k
 					mc.push(["hset", "#{@redisns}#{options.qname}:Q", item, options[item]])

@@ -472,7 +472,7 @@ RedisSMQ = (function(superClass) {
             _this._handleError(cb, err);
             return;
           }
-          mc = [["hsetnx", "" + _this.redisns + options.qname + ":Q", "modified", resp[0]]];
+          mc = [["hset", "" + _this.redisns + options.qname + ":Q", "modified", resp[0]]];
           for (l = 0, len2 = k.length; l < len2; l++) {
             item = k[l];
             mc.push(["hset", "" + _this.redisns + options.qname + ":Q", item, options[item]]);
