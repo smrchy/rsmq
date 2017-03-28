@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.8.2
+
+* Added mention for "RSMQ in other languages" in README.md
+
 ## 0.8.1
 
 * Make sure `setQueueAttributes` does refresh `modified` field. Fix for #47. Thanks @igr
