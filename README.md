@@ -67,7 +67,7 @@ Parameters for RedisSMQ via an *options* object:
 
 * `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 * `port` (Number): *optional (Default: 6379)* The Redis port
-* `options` (Object): *optional (Default: {})* The Redis [https://github.com/mranney/node_redis#rediscreateclientport-host-options](redis.createClient) `options` object. 
+* `options` (Object): *optional (Default: {})* The Redis [https://github.com/NodeRedis/node_redis#options-object-properties](https://github.com/NodeRedis/node_redis#options-object-properties) `options` object. 
 * `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
 * `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by RSMQ
 
