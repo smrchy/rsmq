@@ -31,6 +31,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		return
 
 	after (done) ->
+		rsmq.quit()
 		done()		
 		return
 
