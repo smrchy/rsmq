@@ -31,8 +31,10 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		return
 
 	after (done) ->
+		console.log("Redis quitting...")
 		rsmq.quit()
-		done()		
+		done()
+
 		return
 
 	it 'get a RedisSMQ instance', (done) ->
