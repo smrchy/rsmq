@@ -42,7 +42,6 @@ describe('Redis-Simple-Message-Queue Test', function() {
   after(function(done) {
     console.log("Redis quitting...");
     rsmq.quit();
-    process.exit(0);
     done();
   });
   it('get a RedisSMQ instance', function(done) {

@@ -1,5 +1,11 @@
 # CHANGELOG for rsmq
 
+## 0.8.3
+
+* Removed Travis test for Node 7
+* Added Travis test for Node 8
+* Mocha 4.x fixes for Travis test runner.
+
 ## 0.8.2
 
 * Added mention for "RSMQ in other languages" in README.md
