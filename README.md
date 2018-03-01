@@ -51,7 +51,7 @@ To keep the core of *RSMQ* small additional functionality is available as module
 
 The simplicity of RSMQ is useful in other languages. Here is a list of implementations in other languages:
 
-* [**Java**](https://github.com/wedeploy/jrsmq) RSMQ for Java. See [#48](https://github.com/smrchy/rsmq/issues/48)
+* [**Java**](https://github.com/igr/jrsmq) RSMQ for Java. See [#48](https://github.com/smrchy/rsmq/issues/48)
 
 Note: Should you plan to port RSQM to another language please make sure to have tests to insure compatibility with all RSMQ clients. And of course: let me know so i can mention your port here.
 
