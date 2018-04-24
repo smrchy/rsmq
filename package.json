@@ -11,8 +11,9 @@
 		"test": "mocha ./test/test.js"
 	},
 	"dependencies": {
-		"redis": "^2.8.0",
-		"lodash": "^4.17.4"
+		"@types/redis": "^2.8.0",
+		"lodash": "^4.17.4",
+		"redis": "^2.8.0"
 	},
 	"optionalDependencies": {
 		"hiredis": "^0.5.0"
@@ -35,5 +36,7 @@
 	},
 	"bugs": {
 		"url": "https://github.com/smrchy/rsmq/issues"
-	}
+	},
+	"main": "./index.js",
+	"types": "./index.d.ts"
 }
