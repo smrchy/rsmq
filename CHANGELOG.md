@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.8.4
+
+* Added Typescript typings
+
 ## 0.8.3
 
 * Removed Travis test for Node 7

@@ -18,7 +18,8 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 * [Test coverage](http://travis-ci.org/smrchy/rsmq)
 * A message is deleted by the message id. The message id is returned by the `sendMessage` and `receiveMessage` method.
 * Messages stay in the queue unless deleted.
-* Optional RESTful interface via [rest-rsmq](https://github.com/smrchy/rest-rsmq)  
+* Optional RESTful interface via [rest-rsmq](https://github.com/smrchy/rest-rsmq)
+* Typescript Typings ❤️  
   
 **Note:** RSMQ uses the Redis EVAL command (LUA scripts) so the minimum Redis version is 2.6+. 
 
