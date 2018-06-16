@@ -36,7 +36,7 @@ EventEmitter = require( "events" ).EventEmitter
 class RedisSMQ extends EventEmitter
 
 	constructor: (options = {}) ->
-		
+
 		opts = _.extend
 			host: "127.0.0.1"
 			port: 6379
@@ -58,7 +58,7 @@ class RedisSMQ extends EventEmitter
 			@emit( "connect" )
 			@initScript()
 
-		# Once the connection is up 
+		# Once the connection is up
 		@redis.on "connect", =>
 			@connected = true
 			@emit( "connect" )
@@ -118,7 +118,7 @@ class RedisSMQ extends EventEmitter
 		return
 
 	# This must be done via LUA script
-	# 
+	#
 	# We can only set a visibility of a message if it really exists.
 	#
 	changeMessageVisibility: (options, cb) =>
@@ -137,7 +137,7 @@ class RedisSMQ extends EventEmitter
 				@_changeMessageVisibility(options, q, cb)
 				return
 			return
-			
+
 		return
 
 	_changeMessageVisibility: (options, q, cb) =>
@@ -267,7 +267,7 @@ class RedisSMQ extends EventEmitter
 					modified: parseInt(resp[0][6], 10)
 					msgs: resp[1]
 					hiddenmsgs: resp[2]
-					
+
 				cb(null, o)
 				return
 			return
@@ -292,7 +292,7 @@ class RedisSMQ extends EventEmitter
 
 	initScript: (cb) ->
 		# The popMessage LUA Script
-		# 
+		#
 		# Parameters:
 		#
 		# KEYS[1]: the zset key
@@ -305,7 +305,7 @@ class RedisSMQ extends EventEmitter
 		# * Return the message and the counters
 		#
 		# Returns:
-		# 
+		#
 		# {id, message, rc, fr}
 
 		script_popMessage = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")
@@ -318,8 +318,8 @@ class RedisSMQ extends EventEmitter
 			local o = {msg[1], mbody, rc}
 			if rc==1 then
 				table.insert(o, KEYS[2])
-			else			
-				local fr = redis.call("HGET", KEYS[1] .. ":Q", msg[1] .. ":fr")	
+			else
+				local fr = redis.call("HGET", KEYS[1] .. ":Q", msg[1] .. ":fr")
 				table.insert(o, fr)
 			end
 			redis.call("ZREM", KEYS[1], msg[1])
@@ -327,7 +327,7 @@ class RedisSMQ extends EventEmitter
 			return o'
 
 		# The receiveMessage LUA Script
-		# 
+		#
 		# Parameters:
 		#
 		# KEYS[1]: the zset key
@@ -341,7 +341,7 @@ class RedisSMQ extends EventEmitter
 		# * Return the message and the counters
 		#
 		# Returns:
-		# 
+		#
 		# {id, message, rc, fr}
 
 		script_receiveMessage = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")
@@ -356,14 +356,14 @@ class RedisSMQ extends EventEmitter
 			if rc==1 then
 				redis.call("HSET", KEYS[1] .. ":Q", msg[1] .. ":fr", KEYS[2])
 				table.insert(o, KEYS[2])
-			else			
+			else
 				local fr = redis.call("HGET", KEYS[1] .. ":Q", msg[1] .. ":fr")
 				table.insert(o, fr)
 			end
-			return o'	
+			return o'
 
 		# The changeMessageVisibility LUA Script
-		# 
+		#
 		# Parameters:
 		#
 		# KEYS[1]: the zset key
@@ -374,7 +374,7 @@ class RedisSMQ extends EventEmitter
 		# * Set the new timer
 		#
 		# Returns:
-		# 
+		#
 		# 0 or 1
 
 		script_changeMessageVisibility = 'local msg = redis.call("ZSCORE", KEYS[1], KEYS[2])
@@ -389,18 +389,18 @@ class RedisSMQ extends EventEmitter
 				console.log err
 				return
 			@popMessage_sha1 = resp
-			@emit('scriptload:popMessage');
+			@emit('scriptload:popMessage')
 			return
 		@redis.script "load", script_receiveMessage, (err, resp) =>
 			if err
 				console.log err
 				return
 			@receiveMessage_sha1 = resp
-			@emit('scriptload:receiveMessage');
+			@emit('scriptload:receiveMessage')
 			return
 		@redis.script "load", script_changeMessageVisibility, (err, resp) =>
 			@changeMessageVisibility_sha1 = resp
-			@emit('scriptload:changeMessageVisibility');
+			@emit('scriptload:changeMessageVisibility')
 			return
 		return
 
@@ -473,7 +473,7 @@ class RedisSMQ extends EventEmitter
 				return
 			# Now that we got the default queue settings
 			options.delay = options.delay ? q.delay
-			
+
 			if @_validate(options, ["delay"],cb) is false
 				return
 
@@ -548,7 +548,7 @@ class RedisSMQ extends EventEmitter
 			_err = new Error()
 			_err.name = err
 			_err.message = @_ERRORS?[err]?(data) or "unkown"
-		else 
+		else
 			_err = err
 		cb(_err)
 		return
@@ -561,11 +561,11 @@ class RedisSMQ extends EventEmitter
 
 	_makeid: (len) ->
 		text = ""
-		possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 		for i in [0...len]
 			text += possible.charAt(Math.floor(Math.random() * possible.length))
 		return text
-	
+
 	_VALID:
 		qname:	/^([a-zA-Z0-9_-]){1,160}$/
 		id:		/^([a-zA-Z0-9:]){32}$/
