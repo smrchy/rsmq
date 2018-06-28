@@ -42,10 +42,12 @@ class RedisSMQ extends EventEmitter
 			port: 6379
 			options: {}
 			client: null
-			ns: "rsmq"
+			ns: "rsmq",
+			makeTaskId: (uuid) => uuid,
 		, options
 
 		@redisns = opts.ns + ":"
+		@makeTaskId = opts.makeTaskId
 		if opts.client?.constructor?.name is "RedisClient"
 			@redis = opts.client
 		else
@@ -485,7 +487,8 @@ class RedisSMQ extends EventEmitter
 			if q.maxsize isnt -1 and options.message.length > q.maxsize
 				@_handleError(cb, "messageTooLong")
 				return
-
+			# Makr final task id
+			q.uid = @makeTaskId(q.uid, options.message)
 			# Ready to store the message
 			mc = [
 				["zadd", "#{@redisns}#{options.qname}", q.ts + options.delay * 1000, q.uid]

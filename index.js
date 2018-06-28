@@ -58,9 +58,15 @@ RedisSMQ = (function(superClass) {
       port: 6379,
       options: {},
       client: null,
-      ns: "rsmq"
+      ns: "rsmq",
+      makeTaskId: (function(_this) {
+        return function(uuid) {
+          return uuid;
+        };
+      })(this)
     }, options);
     this.redisns = opts.ns + ":";
+    this.makeTaskId = opts.makeTaskId;
     if (((ref = opts.client) != null ? (ref1 = ref.constructor) != null ? ref1.name : void 0 : void 0) === "RedisClient") {
       this.redis = opts.client;
     } else {
@@ -430,6 +436,8 @@ RedisSMQ = (function(superClass) {
           _this._handleError(cb, "messageTooLong");
           return;
         }
+        q.uid = _this.makeTaskId(q.uid, options.message);
+        console.log(q.uid);
         mc = [["zadd", "" + _this.redisns + options.qname, q.ts + options.delay * 1000, q.uid], ["hset", "" + _this.redisns + options.qname + ":Q", q.uid, options.message], ["hincrby", "" + _this.redisns + options.qname + ":Q", "totalsent", 1]];
         _this.redis.multi(mc).exec(function(err, resp) {
           if (err) {

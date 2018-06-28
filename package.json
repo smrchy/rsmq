@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "coffee -cb index.coffee test/test.coffee",
-    "test": "mocha ./test/test.js"
+    "test": "mocha ./test/test.js",
+    "pretest": "npm run build"
   },
   "dependencies": {
     "@types/redis": "^2.8.0",
