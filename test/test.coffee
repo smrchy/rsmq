@@ -5,6 +5,12 @@ RedisSMQ = require "../index"
 
 RedisInst = require "redis"
 redis = RedisInst.createClient()
+redissub = RedisInst.createClient()
+redissub.subscribe("rsmq:rt:test1")
+Q1LENGTH = 0
+redissub.on "message", (channel, message) ->
+	Q1LENGTH = Number(message)
+	return
 
 describe 'Redis-Simple-Message-Queue Test', ->
 	rsmq = null
@@ -31,14 +37,22 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		return
 
 	after (done) ->
-		console.log("Redis quitting...")
+		console.log("Removing Queues")
+		# Kill all queues
+		rsmq.deleteQueue {qname: queue1.name}, (err) ->
+			return
+		
+		rsmq.deleteQueue {qname: queue2.name}, (err) ->
+			return
+		@timeout(100)
+		console.log("Disconnecting Redis")
 		rsmq.quit()
 		done()
 
 		return
 
 	it 'get a RedisSMQ instance', (done) ->
-		rsmq = new RedisSMQ()
+		rsmq = new RedisSMQ({realtime: true})
 		rsmq.should.be.an.instanceOf RedisSMQ
 		done()
 		return
@@ -578,28 +592,30 @@ describe 'Redis-Simple-Message-Queue Test', ->
 					return
 				return
 			return
-
-
-
-		# TODO: Check different vt values on receive
-
-	describe 'CLEANUP', ->
-		# Kill all queues
-		it 'Remove  queue1.name', (done) ->
-			rsmq.deleteQueue {qname: queue1.name}, (err, resp) ->
-				should.not.exist(err)
-				resp.should.equal(1)
-				done()
-				return
-			return
-
-		it 'Remove queue2', (done) ->
-			rsmq.deleteQueue {qname: queue2.name}, (err, resp) ->
-				should.not.exist(err)
-				resp.should.equal(1)
-				done()
-				return
-			return
 		return
 
+	describe 'Realtime Pub/Sub notifications', ->
+		it 'Send another message to queue1', (done) ->
+			rsmq.sendMessage {qname: queue1.name, message:"Another World"}, (err, resp) ->
+				should.not.exist(err)
+				done()
+				return
+			return
+		it 'Wait 100ms and check queue1 length. Should be 2', (done) ->
+			@timeout(100)
+			Q1LENGTH.should.equal(2)
+			done()
+			return
+		it 'Send another message to queue1', (done) ->
+			rsmq.sendMessage {qname: queue1.name, message:"Another World"}, (err, resp) ->
+				should.not.exist(err)
+				done()
+				return
+			return
+		it 'Wait 100ms and check queue1 length. Should be 3', (done) ->
+			@timeout(100)
+			Q1LENGTH.should.equal(3)
+			done()
+			return
+		return
 	return

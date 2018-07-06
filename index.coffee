@@ -5,7 +5,7 @@ A Really Simple Message Queue based on Redis
 
 The MIT License (MIT)
 
-Copyright © 2013-2016 Patrick Liess, http://www.tcs.de
+Copyright © 2013-2018 Patrick Liess, http://www.tcs.de
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -22,7 +22,7 @@ EventEmitter = require( "events" ).EventEmitter
 
 # To create a new instance use:
 #
-# 	RedisSMQ = require("redis-simple-message-queue")
+# 	RedisSMQ = require("rsmq")
 #	rsmq = new RedisSMQ()
 #
 #	Paramenters for RedisSMQ:
@@ -30,8 +30,9 @@ EventEmitter = require( "events" ).EventEmitter
 #	* `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 #	* `port` (Number): *optional (Default: 6379)* The Redis port
 #	* `options` (Object): *optional (Default: {})* The Redis options object.
-#   * `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
+#	* `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
 #	* `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by **rsmq**
+#	* `realtime` (Boolean): *optional (Default: false)* Enable realtime PUBLISH of new messages
 ##
 class RedisSMQ extends EventEmitter
 
@@ -43,8 +44,9 @@ class RedisSMQ extends EventEmitter
 			options: {}
 			client: null
 			ns: "rsmq"
+			realtime: false
 		, options
-
+		@realtime = opts.realtime
 		@redisns = opts.ns + ":"
 		if opts.client?.constructor?.name is "RedisClient"
 			@redis = opts.client
@@ -487,16 +489,21 @@ class RedisSMQ extends EventEmitter
 				return
 
 			# Ready to store the message
+			key = "#{@redisns}#{options.qname}"
 			mc = [
-				["zadd", "#{@redisns}#{options.qname}", q.ts + options.delay * 1000, q.uid]
-				["hset", "#{@redisns}#{options.qname}:Q", q.uid, options.message]
-				["hincrby", "#{@redisns}#{options.qname}:Q", "totalsent", 1]
+				["zadd", key, q.ts + options.delay * 1000, q.uid]
+				["hset", "#{key}:Q", q.uid, options.message]
+				["hincrby", "#{key}:Q", "totalsent", 1]
 			]
+			if @realtime
+				mc.push(["zcard", key])
 
 			@redis.multi(mc).exec (err, resp) =>
 				if err
 					@_handleError(cb, err)
 					return
+				if @realtime
+					@redis.publish("#{@redisns}rt:#{options.qname}", resp[3])
 				cb(null, q.uid)
 				return
 			return

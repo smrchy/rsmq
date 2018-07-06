@@ -69,9 +69,10 @@ Parameters for RedisSMQ via an *options* object:
 
 * `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 * `port` (Number): *optional (Default: 6379)* The Redis port
-* `options` (Object): *optional (Default: {})* The Redis [https://github.com/NodeRedis/node_redis#options-object-properties](https://github.com/NodeRedis/node_redis#options-object-properties) `options` object. 
+* `options` (Object): *optional (Default: {})* The [Redis options](https://github.com/NodeRedis/node_redis#options-object-properties) object. 
 * `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
 * `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by RSMQ
+* `realtime` (Boolean): *optional (Default: false)* Enable realtime PUBLISH of new messages (see the [Realtime section](#realtime))
 
 
 ### Create a queue
@@ -327,6 +328,20 @@ Returns an object:
 
 Disconnect the redis client.
 This is only useful if you are using rsmq within a script and want node to be able to exit.
+
+## Realtime
+
+When [initializing](#initialize) RSMQ you can enable the realtime PUBLISH for new messages. On every new message that gets sent to RSQM via `sendMessage` a Redis PUBLISH will be issued to `{{rsmq.ns}:rt:{qname}.
+
+Example for RSMQ with default settings:
+
+* The queue `testQueue` already contains 5 messages.
+* A new message is being sent to the queue `testQueue`.
+* The following Redis command will be issued: `PUBLISH rsmq:rt:testQueue 6`
+
+### How to use the realtime option
+
+Besides the PUBLISH when a new message is sent to RSMQ nothing else will happen. Your app could use the Redis SUBSCRIBE command to be notified of new messages and issue a `receiveMessage` then. However make sure not to listen with multiple workers for new messages with SUBSCRIBE to prevent multiple simultaneous `receiveMessage` calls. 
 
 ## Changes
 
