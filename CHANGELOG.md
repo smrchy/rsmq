@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.9.2
+
+* add realtime option in typescript typings
+
 ## 0.9.0
 
 * Added realtime option for Redis PUB/SUB when a new message is sent to RSMQ
