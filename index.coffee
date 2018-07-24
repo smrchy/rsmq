@@ -5,7 +5,7 @@ A Really Simple Message Queue based on Redis
 
 The MIT License (MIT)
 
-Copyright © 2013-2016 Patrick Liess, http://www.tcs.de
+Copyright © 2013-2018 Patrick Liess, http://www.tcs.de
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -22,7 +22,7 @@ EventEmitter = require( "events" ).EventEmitter
 
 # To create a new instance use:
 #
-# 	RedisSMQ = require("redis-simple-message-queue")
+# 	RedisSMQ = require("rsmq")
 #	rsmq = new RedisSMQ()
 #
 #	Paramenters for RedisSMQ:
@@ -30,21 +30,23 @@ EventEmitter = require( "events" ).EventEmitter
 #	* `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 #	* `port` (Number): *optional (Default: 6379)* The Redis port
 #	* `options` (Object): *optional (Default: {})* The Redis options object.
-#   * `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
+#	* `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
 #	* `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by **rsmq**
+#	* `realtime` (Boolean): *optional (Default: false)* Enable realtime PUBLISH of new messages
 ##
 class RedisSMQ extends EventEmitter
 
 	constructor: (options = {}) ->
-		
+
 		opts = _.extend
 			host: "127.0.0.1"
 			port: 6379
 			options: {}
 			client: null
 			ns: "rsmq"
+			realtime: false
 		, options
-
+		@realtime = opts.realtime
 		@redisns = opts.ns + ":"
 		if opts.client?.constructor?.name is "RedisClient"
 			@redis = opts.client
@@ -58,7 +60,7 @@ class RedisSMQ extends EventEmitter
 			@emit( "connect" )
 			@initScript()
 
-		# Once the connection is up 
+		# Once the connection is up
 		@redis.on "connect", =>
 			@connected = true
 			@emit( "connect" )
@@ -118,7 +120,7 @@ class RedisSMQ extends EventEmitter
 		return
 
 	# This must be done via LUA script
-	# 
+	#
 	# We can only set a visibility of a message if it really exists.
 	#
 	changeMessageVisibility: (options, cb) =>
@@ -137,7 +139,7 @@ class RedisSMQ extends EventEmitter
 				@_changeMessageVisibility(options, q, cb)
 				return
 			return
-			
+
 		return
 
 	_changeMessageVisibility: (options, q, cb) =>
@@ -267,7 +269,7 @@ class RedisSMQ extends EventEmitter
 					modified: parseInt(resp[0][6], 10)
 					msgs: resp[1]
 					hiddenmsgs: resp[2]
-					
+
 				cb(null, o)
 				return
 			return
@@ -292,7 +294,7 @@ class RedisSMQ extends EventEmitter
 
 	initScript: (cb) ->
 		# The popMessage LUA Script
-		# 
+		#
 		# Parameters:
 		#
 		# KEYS[1]: the zset key
@@ -305,7 +307,7 @@ class RedisSMQ extends EventEmitter
 		# * Return the message and the counters
 		#
 		# Returns:
-		# 
+		#
 		# {id, message, rc, fr}
 
 		script_popMessage = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")
@@ -318,8 +320,8 @@ class RedisSMQ extends EventEmitter
 			local o = {msg[1], mbody, rc}
 			if rc==1 then
 				table.insert(o, KEYS[2])
-			else			
-				local fr = redis.call("HGET", KEYS[1] .. ":Q", msg[1] .. ":fr")	
+			else
+				local fr = redis.call("HGET", KEYS[1] .. ":Q", msg[1] .. ":fr")
 				table.insert(o, fr)
 			end
 			redis.call("ZREM", KEYS[1], msg[1])
@@ -327,7 +329,7 @@ class RedisSMQ extends EventEmitter
 			return o'
 
 		# The receiveMessage LUA Script
-		# 
+		#
 		# Parameters:
 		#
 		# KEYS[1]: the zset key
@@ -341,7 +343,7 @@ class RedisSMQ extends EventEmitter
 		# * Return the message and the counters
 		#
 		# Returns:
-		# 
+		#
 		# {id, message, rc, fr}
 
 		script_receiveMessage = 'local msg = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", KEYS[2], "LIMIT", "0", "1")
@@ -356,14 +358,14 @@ class RedisSMQ extends EventEmitter
 			if rc==1 then
 				redis.call("HSET", KEYS[1] .. ":Q", msg[1] .. ":fr", KEYS[2])
 				table.insert(o, KEYS[2])
-			else			
+			else
 				local fr = redis.call("HGET", KEYS[1] .. ":Q", msg[1] .. ":fr")
 				table.insert(o, fr)
 			end
-			return o'	
+			return o'
 
 		# The changeMessageVisibility LUA Script
-		# 
+		#
 		# Parameters:
 		#
 		# KEYS[1]: the zset key
@@ -374,7 +376,7 @@ class RedisSMQ extends EventEmitter
 		# * Set the new timer
 		#
 		# Returns:
-		# 
+		#
 		# 0 or 1
 
 		script_changeMessageVisibility = 'local msg = redis.call("ZSCORE", KEYS[1], KEYS[2])
@@ -389,18 +391,18 @@ class RedisSMQ extends EventEmitter
 				console.log err
 				return
 			@popMessage_sha1 = resp
-			@emit('scriptload:popMessage');
+			@emit('scriptload:popMessage')
 			return
 		@redis.script "load", script_receiveMessage, (err, resp) =>
 			if err
 				console.log err
 				return
 			@receiveMessage_sha1 = resp
-			@emit('scriptload:receiveMessage');
+			@emit('scriptload:receiveMessage')
 			return
 		@redis.script "load", script_changeMessageVisibility, (err, resp) =>
 			@changeMessageVisibility_sha1 = resp
-			@emit('scriptload:changeMessageVisibility');
+			@emit('scriptload:changeMessageVisibility')
 			return
 		return
 
@@ -473,7 +475,7 @@ class RedisSMQ extends EventEmitter
 				return
 			# Now that we got the default queue settings
 			options.delay = options.delay ? q.delay
-			
+
 			if @_validate(options, ["delay"],cb) is false
 				return
 
@@ -487,16 +489,21 @@ class RedisSMQ extends EventEmitter
 				return
 
 			# Ready to store the message
+			key = "#{@redisns}#{options.qname}"
 			mc = [
-				["zadd", "#{@redisns}#{options.qname}", q.ts + options.delay * 1000, q.uid]
-				["hset", "#{@redisns}#{options.qname}:Q", q.uid, options.message]
-				["hincrby", "#{@redisns}#{options.qname}:Q", "totalsent", 1]
+				["zadd", key, q.ts + options.delay * 1000, q.uid]
+				["hset", "#{key}:Q", q.uid, options.message]
+				["hincrby", "#{key}:Q", "totalsent", 1]
 			]
+			if @realtime
+				mc.push(["zcard", key])
 
 			@redis.multi(mc).exec (err, resp) =>
 				if err
 					@_handleError(cb, err)
 					return
+				if @realtime
+					@redis.publish("#{@redisns}rt:#{options.qname}", resp[3])
 				cb(null, q.uid)
 				return
 			return
@@ -548,7 +555,7 @@ class RedisSMQ extends EventEmitter
 			_err = new Error()
 			_err.name = err
 			_err.message = @_ERRORS?[err]?(data) or "unkown"
-		else 
+		else
 			_err = err
 		cb(_err)
 		return
@@ -561,11 +568,11 @@ class RedisSMQ extends EventEmitter
 
 	_makeid: (len) ->
 		text = ""
-		possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 		for i in [0...len]
 			text += possible.charAt(Math.floor(Math.random() * possible.length))
 		return text
-	
+
 	_VALID:
 		qname:	/^([a-zA-Z0-9_-]){1,160}$/
 		id:		/^([a-zA-Z0-9:]){32}$/

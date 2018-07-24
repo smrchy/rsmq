@@ -5,13 +5,19 @@ RedisSMQ = require "../index"
 
 RedisInst = require "redis"
 redis = RedisInst.createClient()
+redissub = RedisInst.createClient()
+redissub.subscribe("rsmq:rt:test1")
+Q1LENGTH = 0
+redissub.on "message", (channel, message) ->
+	Q1LENGTH = Number(message)
+	return
 
 describe 'Redis-Simple-Message-Queue Test', ->
 	rsmq = null
 	rsmq2 = null
 	queue1 =
 		name: "test1"
-	queue2 = 
+	queue2 =
 		name: "test2"
 
 	q1m1 = null
@@ -23,7 +29,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 	looong_string = ->
 		o = ""
 		while o.length < 66000
-			o = o + 'A very long Message...'	
+			o = o + 'A very long Message...'
 		return o
 
 	before (done) ->
@@ -31,14 +37,22 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		return
 
 	after (done) ->
-		console.log("Redis quitting...")
+		console.log("Removing Queues")
+		# Kill all queues
+		rsmq.deleteQueue {qname: queue1.name}, (err) ->
+			return
+		
+		rsmq.deleteQueue {qname: queue2.name}, (err) ->
+			return
+		@timeout(100)
+		console.log("Disconnecting Redis")
 		rsmq.quit()
 		done()
 
 		return
 
 	it 'get a RedisSMQ instance', (done) ->
-		rsmq = new RedisSMQ()
+		rsmq = new RedisSMQ({realtime: true})
 		rsmq.should.be.an.instanceOf RedisSMQ
 		done()
 		return
@@ -170,7 +184,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
-		
+
 
 		it 'ListQueues: Should return array with two elements', (done) ->
 			rsmq.listQueues (err, resp) ->
@@ -303,7 +317,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
-		
+
 		# TODO: Try to send a loooong msg
 
 		it 'Send message 1 with existing Redis instance', (done) ->
@@ -317,7 +331,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 			return
 
 		# Send 1000 msgs to q2 so we can delay sending of msg 2 to q1
-		
+
 		it 'Send 1000 messages to queue2: succeed', (done) ->
 			pq = []
 			for i in [0...1000]
@@ -330,7 +344,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
-		
+
 		it 'Send message 2', (done) ->
 			rsmq.sendMessage {qname: queue1.name, message:"World"}, (err, resp) ->
 				should.not.exist(err)
@@ -490,7 +504,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
-		
+
 		it 'Receive 1000 messages from queue2 and delete 500 (those where number is even)', (done) ->
 			pq = []
 			# we keep vt = 0 so we can query them again quickly
@@ -538,7 +552,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 					return
 				return
 			return
-		
+
 		it 'Receive a message from queue2. Should return {}', (done) ->
 			rsmq.receiveMessage {qname: queue2.name}, (err, resp) ->
 				should.not.exist(resp.id)
@@ -556,7 +570,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
-	
+
 		it 'setQueueAttributes: Should return the queue2 with an umlimited maxsize', (done) ->
 			rsmq.setQueueAttributes {qname: queue2.name , delay: 0, vt: 30, maxsize: -1}, (err, resp) ->
 				resp.vt.should.equal(30)
@@ -578,29 +592,30 @@ describe 'Redis-Simple-Message-Queue Test', ->
 					return
 				return
 			return
+		return
 
-
-
-		# TODO: Check different vt values on receive
-		
-	describe 'CLEANUP', ->
-		# Kill all queues
-		it 'Remove  queue1.name', (done) ->
-			rsmq.deleteQueue {qname: queue1.name}, (err, resp) ->
+	describe 'Realtime Pub/Sub notifications', ->
+		it 'Send another message to queue1', (done) ->
+			rsmq.sendMessage {qname: queue1.name, message:"Another World"}, (err, resp) ->
 				should.not.exist(err)
-				resp.should.equal(1)
 				done()
 				return
 			return
-
-		it 'Remove queue2', (done) ->
-			rsmq.deleteQueue {qname: queue2.name}, (err, resp) ->
+		it 'Wait 100ms and check queue1 length. Should be 2', (done) ->
+			@timeout(100)
+			Q1LENGTH.should.equal(2)
+			done()
+			return
+		it 'Send another message to queue1', (done) ->
+			rsmq.sendMessage {qname: queue1.name, message:"Another World"}, (err, resp) ->
 				should.not.exist(err)
-				resp.should.equal(1)
 				done()
 				return
+			return
+		it 'Wait 100ms and check queue1 length. Should be 3', (done) ->
+			@timeout(100)
+			Q1LENGTH.should.equal(3)
+			done()
 			return
 		return
-	
 	return
-	

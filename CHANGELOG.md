@@ -1,5 +1,12 @@
 # CHANGELOG for rsmq
 
+## 0.9.0
+
+* Added realtime option for Redis PUB/SUB when a new message is sent to RSMQ
+* Added tests for realtime
+* Added Travis tests for Node 10
+* Updated dependencies (lodash and dev.async)
+
 ## 0.8.4
 
 * Added Typescript typings
