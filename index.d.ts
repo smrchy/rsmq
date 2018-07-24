@@ -46,6 +46,7 @@ declare namespace RedisSMQ {
 	export type Callback<T> = (err: any, response: T) => void;
 
 	export interface ConstructorOptions {
+		realtime?: boolean;
 		host?: string;
 		port?: number;
 		ns?: string;
