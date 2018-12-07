@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.9.3
+
+* removed `hiredis` optionalDependency
+
 ## 0.9.2
 
 * add realtime option in typescript typings
