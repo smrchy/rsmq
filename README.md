@@ -20,6 +20,7 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 * Messages stay in the queue unless deleted.
 * Optional RESTful interface via [rest-rsmq](https://github.com/smrchy/rest-rsmq)
 * Typescript Typings ❤️
+* Optional Promise-based API (only if `Promise` is defined), just suffix your method with `Async`, eg: `sendMessage` -> `sendMessageAsync`, all queue methods are supported
 
 **Note:** RSMQ uses the Redis EVAL command (LUA scripts) so the minimum Redis version is 2.6+. 
 
@@ -85,9 +86,17 @@ rsmq.createQueue({qname:"myqueue"}, function (err, resp) {
 			console.log("queue created")
 		}
 });
-
 ```
 
+or Promise-based:
+
+```javascript
+rsmq.createQueueAsync({qname:"myqueue"}.then(function (resp) {
+	if (resp===1) {
+		console.log("queue created")
+	}
+});
+```
 
 ### Send a message
 
@@ -100,12 +109,35 @@ rsmq.sendMessage({qname:"myqueue", message:"Hello World"}, function (err, resp) 
 });
 ```
 
+or Promise-based:
+
+```javascript
+rsmq.sendMessageAsync({qname:"myqueue", message:"Hello World"}).then(function (resp) {
+	if (resp) {
+		console.log("Message sent. ID:", resp);
+	}
+});
+```
+
 
 ### Receive a message
 
 
 ```javascript
 rsmq.receiveMessage({qname:"myqueue"}, function (err, resp) {
+	if (resp.id) {
+		console.log("Message received.", resp)	
+	}
+	else {
+		console.log("No messages for me...")
+	}
+});
+```
+
+or Promise-based:
+
+```javascript
+rsmq.receiveMessageAsync({qname:"myqueue"}).then(function (resp) {
 	if (resp.id) {
 		console.log("Message received.", resp)	
 	}

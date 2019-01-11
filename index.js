@@ -18,7 +18,8 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 var EventEmitter, RedisInst, RedisSMQ, _, crypto,
   bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-  hasProp = {}.hasOwnProperty;
+  hasProp = {}.hasOwnProperty,
+  slice = [].slice;
 
 crypto = require("crypto");
 
@@ -53,6 +54,10 @@ RedisSMQ = (function(superClass) {
     this.changeMessageVisibility = bind(this.changeMessageVisibility, this);
     this._getQueue = bind(this._getQueue, this);
     this.quit = bind(this.quit, this);
+    this.asyncify = bind(this.asyncify, this);
+    if (Promise) {
+      _.forEach(["changeMessageVisibility", "createQueue", "deleteMessage", "deleteQueue", "getQueueAttributes", "listQueues", "popMessage", "receiveMessage", "sendMessage", "setQueueAttributes"], this.asyncify);
+    }
     opts = _.extend({
       host: "127.0.0.1",
       port: 6379,
@@ -94,6 +99,26 @@ RedisSMQ = (function(superClass) {
     this._initErrors();
     return;
   }
+
+  RedisSMQ.prototype.asyncify = function(methodKey) {
+    var asyncMethodKey;
+    asyncMethodKey = methodKey + "Async";
+    this[asyncMethodKey] = (function(_this) {
+      return function() {
+        var args;
+        args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+        return new Promise(function(resolve, reject) {
+          return _this[methodKey].apply(_this, slice.call(args).concat([function(err, result) {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(result);
+          }]));
+        });
+      };
+    })(this);
+  };
 
   RedisSMQ.prototype.quit = function() {
     this.redis.quit();

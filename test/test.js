@@ -19,12 +19,12 @@ redissub.subscribe("rsmq:rt:test1");
 
 Q1LENGTH = 0;
 
-redissub.on("message", function(channel, message) {
-  Q1LENGTH = Number(message);
+redissub.on("message", function(channel, depth) {
+  Q1LENGTH = Number(depth);
 });
 
 describe('Redis-Simple-Message-Queue Test', function() {
-  var looong_string, q1m1, q1m2, q1m3, q2m2, q2msgs, queue1, queue2, rsmq, rsmq2;
+  var looong_string, q1m1, q1m2, q1m3, q2m2, q2msgs, queue1, queue2, queue3, rsmq, rsmq2;
   rsmq = null;
   rsmq2 = null;
   queue1 = {
@@ -32,6 +32,11 @@ describe('Redis-Simple-Message-Queue Test', function() {
   };
   queue2 = {
     name: "test2"
+  };
+  queue3 = {
+    name: "test3promises",
+    m1: "Hello",
+    m2: "World"
   };
   q1m1 = null;
   q1m2 = null;
@@ -76,6 +81,56 @@ describe('Redis-Simple-Message-Queue Test', function() {
     rsmq2.should.be.an.instanceOf(RedisSMQ);
     done();
   });
+  it('should delete all leftover queues', function(done) {
+    rsmq.deleteQueue({
+      qname: queue1.name
+    }, function(err) {});
+    rsmq.deleteQueue({
+      qname: queue2.name
+    }, function(err) {});
+    rsmq.deleteQueue({
+      qname: queue3.name
+    }, function(err) {});
+    setTimeout(done, 100);
+  });
+  describe('Promise Api', function() {
+    it('should create a queue', function() {
+      return rsmq.createQueueAsync({
+        qname: queue3.name
+      });
+    });
+    it('should send a message', function() {
+      return rsmq.sendMessageAsync({
+        qname: queue3.name,
+        message: queue3.m1
+      });
+    });
+    it('should send another message', function() {
+      return rsmq.sendMessageAsync({
+        qname: queue3.name,
+        message: queue3.m2
+      });
+    });
+    it('should receive a message', function() {
+      return rsmq.receiveMessageAsync({
+        qname: queue3.name
+      }).then(function(resp) {
+        resp.message.should.equal(queue3.m1);
+      });
+    });
+    it('should receive another message', function() {
+      return rsmq.receiveMessageAsync({
+        qname: queue3.name
+      }).then(function(resp) {
+        resp.message.should.equal(queue3.m2);
+      });
+    });
+    it('should delete the created queue', function() {
+      return rsmq.deleteQueueAsync({
+        qname: queue3.name
+      });
+    });
+  });
   describe('Queues', function() {
     it('Should fail: Create a new queue with invalid characters in name', function(done) {
       rsmq.createQueue({
@@ -102,6 +157,14 @@ describe('Redis-Simple-Message-Queue Test', function() {
         done();
       });
     });
+    it('Should fail: Create a new queue with negative vt - using createQueueAsync', function() {
+      return rsmq.createQueueAsync({
+        qname: queue1.name,
+        vt: -20
+      }).should.be.rejectedWith(Error, {
+        message: "vt must be between 0 and 9999999"
+      });
+    });
     it('Should fail: Create a new queue with non numeric vt', function(done) {
       rsmq.createQueue({
         qname: queue1.name,
@@ -109,6 +172,14 @@ describe('Redis-Simple-Message-Queue Test', function() {
       }, function(err, resp) {
         err.message.should.equal("vt must be between 0 and 9999999");
         done();
+      });
+    });
+    it('Should fail: Create a new queue with non numeric vt', function() {
+      return rsmq.createQueueAsync({
+        qname: queue1.name,
+        vt: "not_a_number"
+      }).should.be.rejectedWith(Error, {
+        message: "vt must be between 0 and 9999999"
       });
     });
     it('Should fail: Create a new queue with vt too high', function(done) {
@@ -762,8 +833,10 @@ describe('Redis-Simple-Message-Queue Test', function() {
         done();
       });
     });
-    it('Wait 100ms and check queue1 length. Should be 2', function(done) {
-      this.timeout(100);
+    it('wait 100ms', function(done) {
+      return setTimeout(done, 100);
+    });
+    it('check queue1 length. Should be 2', function(done) {
       Q1LENGTH.should.equal(2);
       done();
     });
@@ -776,8 +849,10 @@ describe('Redis-Simple-Message-Queue Test', function() {
         done();
       });
     });
-    it('Wait 100ms and check queue1 length. Should be 3', function(done) {
-      this.timeout(100);
+    it('wait 100ms', function(done) {
+      return setTimeout(done, 100);
+    });
+    it('check queue1 length. Should be 3', function(done) {
       Q1LENGTH.should.equal(3);
       done();
     });

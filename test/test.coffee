@@ -8,8 +8,8 @@ redis = RedisInst.createClient()
 redissub = RedisInst.createClient()
 redissub.subscribe("rsmq:rt:test1")
 Q1LENGTH = 0
-redissub.on "message", (channel, message) ->
-	Q1LENGTH = Number(message)
+redissub.on "message", (channel, depth) ->
+	Q1LENGTH = Number(depth)
 	return
 
 describe 'Redis-Simple-Message-Queue Test', ->
@@ -19,6 +19,10 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		name: "test1"
 	queue2 =
 		name: "test2"
+	queue3 =
+		name: "test3promises"
+		m1: "Hello"
+		m2: "World"
 
 	q1m1 = null
 	q1m2 = null
@@ -41,7 +45,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		# Kill all queues
 		rsmq.deleteQueue {qname: queue1.name}, (err) ->
 			return
-		
+
 		rsmq.deleteQueue {qname: queue2.name}, (err) ->
 			return
 		@timeout(100)
@@ -61,6 +65,36 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		rsmq2 = new RedisSMQ({client: redis})
 		rsmq2.should.be.an.instanceOf RedisSMQ
 		done()
+		return
+
+	it 'should delete all leftover queues', (done) ->
+		rsmq.deleteQueue {qname: queue1.name}, (err) ->
+			return
+
+		rsmq.deleteQueue {qname: queue2.name}, (err) ->
+			return
+
+		rsmq.deleteQueue {qname: queue3.name}, (err) ->
+			return
+
+		setTimeout(done, 100)
+		return
+
+	describe 'Promise Api', ->
+		it 'should create a queue', () -> rsmq.createQueueAsync({qname: queue3.name})
+		it 'should send a message', () -> rsmq.sendMessageAsync({qname: queue3.name, message: queue3.m1})
+		it 'should send another message', () -> rsmq.sendMessageAsync({qname: queue3.name, message: queue3.m2})
+		it 'should receive a message', () ->
+			return rsmq.receiveMessageAsync({qname: queue3.name}).then((resp) ->
+				resp.message.should.equal(queue3.m1)
+				return
+			)
+		it 'should receive another message', () ->
+			return rsmq.receiveMessageAsync({qname: queue3.name}).then((resp) ->
+				resp.message.should.equal(queue3.m2)
+				return
+			)
+		it 'should delete the created queue', () -> rsmq.deleteQueueAsync({qname: queue3.name})
 		return
 
 	describe 'Queues', ->
@@ -83,12 +117,17 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
+		it 'Should fail: Create a new queue with negative vt - using createQueueAsync', () ->
+			return rsmq.createQueueAsync({qname: queue1.name, vt: -20}).should.be.rejectedWith(Error, { message: "vt must be between 0 and 9999999" })
+
 		it 'Should fail: Create a new queue with non numeric vt', (done) ->
 			rsmq.createQueue {qname: queue1.name, vt: "not_a_number"}, (err, resp) ->
 				err.message.should.equal("vt must be between 0 and 9999999")
 				done()
 				return
 			return
+		it 'Should fail: Create a new queue with non numeric vt', () ->
+			return rsmq.createQueueAsync({qname: queue1.name, vt: "not_a_number"}).should.be.rejectedWith(Error, { message: "vt must be between 0 and 9999999" })
 		it 'Should fail: Create a new queue with vt too high', (done) ->
 			rsmq.createQueue {qname: queue1.name, vt: 10000000}, (err, resp) ->
 				err.message.should.equal("vt must be between 0 and 9999999")
@@ -601,19 +640,24 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				done()
 				return
 			return
-		it 'Wait 100ms and check queue1 length. Should be 2', (done) ->
-			@timeout(100)
+
+		it 'wait 100ms', (done) -> setTimeout(done, 100)
+
+		it 'check queue1 length. Should be 2', (done) ->
 			Q1LENGTH.should.equal(2)
 			done()
 			return
+
 		it 'Send another message to queue1', (done) ->
 			rsmq.sendMessage {qname: queue1.name, message:"Another World"}, (err, resp) ->
 				should.not.exist(err)
 				done()
 				return
 			return
-		it 'Wait 100ms and check queue1 length. Should be 3', (done) ->
-			@timeout(100)
+
+		it 'wait 100ms', (done) -> setTimeout(done, 100)
+
+		it 'check queue1 length. Should be 3', (done) ->
 			Q1LENGTH.should.equal(3)
 			done()
 			return

@@ -37,6 +37,20 @@ EventEmitter = require( "events" ).EventEmitter
 class RedisSMQ extends EventEmitter
 
 	constructor: (options = {}) ->
+		if Promise
+			# create async versions of methods
+			_.forEach([
+				"changeMessageVisibility",
+				"createQueue",
+				"deleteMessage",
+				"deleteQueue",
+				"getQueueAttributes",
+				"listQueues",
+				"popMessage",
+				"receiveMessage",
+				"sendMessage",
+				"setQueueAttributes",
+			], @asyncify)
 
 		opts = _.extend
 			host: "127.0.0.1"
@@ -77,6 +91,22 @@ class RedisSMQ extends EventEmitter
 			return
 
 		@_initErrors()
+		return
+
+	# helper to create async versions of our public methods (ie. methods that return promises)
+	# example: getQueue -> getQueueAsync
+	asyncify: (methodKey) =>
+		asyncMethodKey = methodKey + "Async"
+		@[asyncMethodKey] = (args...) =>
+			return new Promise((resolve, reject) =>
+				@[methodKey](args..., (err, result) ->
+					if err
+						reject(err)
+						return
+					resolve(result)
+					return
+				)
+			)
 		return
 
 	# kill the connection of the redis client, so your node script will be able to exit.
@@ -139,7 +169,6 @@ class RedisSMQ extends EventEmitter
 				@_changeMessageVisibility(options, q, cb)
 				return
 			return
-
 		return
 
 	_changeMessageVisibility: (options, q, cb) =>
