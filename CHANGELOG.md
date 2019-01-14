@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.10.0
+
+* added optional Promise support and tests
+
 ## 0.9.3
 
 * removed `hiredis` optionalDependency
