@@ -91,7 +91,7 @@ rsmq.createQueue({qname:"myqueue"}, function (err, resp) {
 or Promise-based:
 
 ```javascript
-rsmq.createQueueAsync({qname:"myqueue"}.then(function (resp) {
+rsmq.createQueueAsync({qname:"myqueue"}).then(function (resp) {
 	if (resp===1) {
 		console.log("queue created")
 	}
