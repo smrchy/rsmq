@@ -502,18 +502,22 @@ class RedisSMQ extends EventEmitter {
         const opts = _.extend({
             host: "127.0.0.1",
             port: 6379,
-            options: {},
+            options: {
+                password: options.password || null
+            },
             client: null,
             ns: "rsmq",
             realtime: false
         }, options);
+        opts.options.host = opts.host;
+        opts.options.port = opts.port;
         this.realtime = opts.realtime;
         this.redisns = opts.ns + ":";
         if (opts.client && options.client.constructor.name === "RedisClient") {
             this.redis = opts.client;
         }
         else {
-            this.redis = RedisInst.createClient(opts.port, opts.host, opts.options);
+            this.redis = RedisInst.createClient(opts);
         }
         this.connected = this.redis.connected || false;
         if (this.connected) {

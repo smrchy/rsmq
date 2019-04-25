@@ -74,6 +74,7 @@ Parameters for RedisSMQ via an *options* object:
 * `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
 * `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by RSMQ
 * `realtime` (Boolean): *optional (Default: false)* Enable realtime PUBLISH of new messages (see the [Realtime section](#realtime))
+* `password` (String): *optional (Default: null)* If your Redis server requires a password supply it here
 
 
 ### Create a queue

@@ -5,7 +5,7 @@
 * Refactored all code from coffeescript to typescript.
 * Added tests for #90
 * Removed support for Node 4
-
+* Support for `password` option when connecting to Redis (#70)
 
 ## 0.10.0
 
