@@ -66,6 +66,8 @@ class RedisSMQ extends EventEmitter
 			@redis = opts.client
 		else
 			@redis = RedisInst.createClient(opts.port, opts.host, opts.options)
+			if opts.no_auth
+  				@redis.auth opts.no_auth
 
 		@connected = @redis.connected or false
 
