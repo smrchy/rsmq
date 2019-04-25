@@ -12,7 +12,7 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 ## Features
 
 * Lightweight: **Just Redis** and ~500 lines of javascript.
-* Speed: Send and receive 5000+ messages per second on an average machine. It's **just Redis**.
+* Speed: Send/receive 10000+ messages per second on an average machine. It's **just Redis**.
 * Guaranteed **delivery of a message to exactly one recipient** within a messages visibility timeout.
 * Received messages that are not deleted will reappear after the visibility timeout.
 * [Test coverage](http://travis-ci.org/smrchy/rsmq)
@@ -388,7 +388,6 @@ see the [CHANGELOG](https://github.com/smrchy/rsmq/blob/master/CHANGELOG.md)
 |[**redis-tagging**](https://github.com/smrchy/redis-tagging)|A Node.js helper library to make tagging of items in any legacy database (SQL or NoSQL) easy and fast.|
 |[**redis-sessions**](https://github.com/smrchy/redis-sessions)|An advanced session store for Node.js and Redis|
 |[**rsmq-worker**](https://github.com/mpneuried/rsmq-worker)|Helper to implement a worker based on [RSMQ (Redis Simple Message Queue)](https://github.com/smrchy/rsmq).|
-|[**redis-notifications**](https://github.com/mpneuried/redis-notifications)|A Redis based notification engine. It implements the rsmq-worker to safely create notifications and recurring reports.|
 |[**connect-redis-sessions**](https://github.com/mpneuried/connect-redis-sessions)|A connect or express middleware to use [redis sessions](https://github.com/smrchy/redis-sessions) that lets you handle multiple sessions per user_id.|
 
 

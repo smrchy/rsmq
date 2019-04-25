@@ -5,22 +5,25 @@
   "license": "MIT",
   "author": "P. Liess <smrchy+npm@gmail.com>",
   "engines": {
-    "node": "> 0.10.20"
+    "node": "> 6.0.0"
   },
   "scripts": {
-    "build": "./node_modules/.bin/coffee -cb index.coffee test/test.coffee",
+    "build": "tsc",
+    "watch": "tsc -w",
     "test": "mocha ./test/test.js"
   },
   "dependencies": {
     "@types/redis": "^2.8.0",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.11",
     "redis": "^2.8.0"
   },
   "devDependencies": {
-    "async": "^2.6.1",
-    "coffee-script": "^1.12.7",
+    "async": "^2.6.2",
+    "coffeescript": "^2.4.1",
     "mocha": "^4.0.1",
-    "should": "^13.1.3"
+    "should": "^13.1.3",
+    "ts-loader": "^5.4.3",
+    "typescript": "3.4.5"
   },
   "keywords": [
     "queue",

@@ -86,7 +86,6 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		it 'should send another message', () -> rsmq.sendMessageAsync({qname: queue3.name, message: queue3.m2})
 		it 'should receive a message', () ->
 			return rsmq.receiveMessageAsync({qname: queue3.name, vt: 2}).then((resp) ->
-				console.log(resp)
 				resp.message.should.equal(queue3.m1)
 				return
 			)

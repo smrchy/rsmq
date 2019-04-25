@@ -1,5 +1,12 @@
 # CHANGELOG for rsmq
 
+## 0.9.0
+
+* Refactored all code from coffeescript to typescript.
+* Added tests for #90
+* Removed support for Node 4
+
+
 ## 0.10.0
 
 * added optional Promise support and tests
