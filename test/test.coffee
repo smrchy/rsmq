@@ -81,17 +81,35 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		return
 
 	describe 'Promise Api', ->
-		it 'should create a queue', () -> rsmq.createQueueAsync({qname: queue3.name})
+		it 'should create a queue', () -> rsmq.createQueueAsync({qname: queue3.name, vt: 0})
 		it 'should send a message', () -> rsmq.sendMessageAsync({qname: queue3.name, message: queue3.m1})
 		it 'should send another message', () -> rsmq.sendMessageAsync({qname: queue3.name, message: queue3.m2})
 		it 'should receive a message', () ->
-			return rsmq.receiveMessageAsync({qname: queue3.name}).then((resp) ->
+			return rsmq.receiveMessageAsync({qname: queue3.name, vt: 2}).then((resp) ->
+				console.log(resp)
 				resp.message.should.equal(queue3.m1)
 				return
 			)
 		it 'should receive another message', () ->
-			return rsmq.receiveMessageAsync({qname: queue3.name}).then((resp) ->
+			return rsmq.receiveMessageAsync({qname: queue3.name, vt: 1}).then((resp) ->
 				resp.message.should.equal(queue3.m2)
+				return
+			)
+		it 'Should fail: receive another message - no availabe message', () ->
+			return rsmq.receiveMessageAsync({qname: queue3.name, vt: 1}).then((resp) ->
+				should.not.exist(resp.id)
+				return
+			)
+		it 'wait 1010ms', (done) -> setTimeout(done, 1010)
+		it 'should receive another message', () ->
+			return rsmq.receiveMessageAsync({qname: queue3.name, vt: 3}).then((resp) ->
+				resp.message.should.equal(queue3.m2)
+				return
+			)
+		it 'wait 1010ms', (done) -> setTimeout(done, 1010)
+		it 'should receive another message', () ->
+			return rsmq.receiveMessageAsync({qname: queue3.name, vt: 3}).then((resp) ->
+				resp.message.should.equal(queue3.m1)
 				return
 			)
 		it 'should delete the created queue', () -> rsmq.deleteQueueAsync({qname: queue3.name})
@@ -577,7 +595,6 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				pq.push({qname: queue2.name, vt:0})
 			async.map pq, rsmq.receiveMessage, (err, resp) ->
 				dq = []
-
 				for e in resp when e.message.split(":")[1] % 2
 					dq.push({qname: queue2.name, id:e.id})
 					delete q2msgs[e.id]

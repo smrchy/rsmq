@@ -96,7 +96,8 @@ describe('Redis-Simple-Message-Queue Test', function() {
   describe('Promise Api', function() {
     it('should create a queue', function() {
       return rsmq.createQueueAsync({
-        qname: queue3.name
+        qname: queue3.name,
+        vt: 0
       });
     });
     it('should send a message', function() {
@@ -113,16 +114,49 @@ describe('Redis-Simple-Message-Queue Test', function() {
     });
     it('should receive a message', function() {
       return rsmq.receiveMessageAsync({
-        qname: queue3.name
+        qname: queue3.name,
+        vt: 2
       }).then(function(resp) {
+        console.log(resp);
         resp.message.should.equal(queue3.m1);
       });
     });
     it('should receive another message', function() {
       return rsmq.receiveMessageAsync({
-        qname: queue3.name
+        qname: queue3.name,
+        vt: 1
       }).then(function(resp) {
         resp.message.should.equal(queue3.m2);
+      });
+    });
+    it('Should fail: receive another message - no availabe message', function() {
+      return rsmq.receiveMessageAsync({
+        qname: queue3.name,
+        vt: 1
+      }).then(function(resp) {
+        should.not.exist(resp.id);
+      });
+    });
+    it('wait 1010ms', function(done) {
+      return setTimeout(done, 1010);
+    });
+    it('should receive another message', function() {
+      return rsmq.receiveMessageAsync({
+        qname: queue3.name,
+        vt: 3
+      }).then(function(resp) {
+        resp.message.should.equal(queue3.m2);
+      });
+    });
+    it('wait 1010ms', function(done) {
+      return setTimeout(done, 1010);
+    });
+    it('should receive another message', function() {
+      return rsmq.receiveMessageAsync({
+        qname: queue3.name,
+        vt: 3
+      }).then(function(resp) {
+        resp.message.should.equal(queue3.m1);
       });
     });
     it('should delete the created queue', function() {
