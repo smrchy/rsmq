@@ -1,6 +1,6 @@
 # CHANGELOG for rsmq
 
-## 0.9.1
+## 0.11.0
 
 * Refactored all code from coffeescript to typescript.
 * Added tests for #90
