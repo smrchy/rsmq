@@ -305,7 +305,7 @@ Parameters:
 
 Returns:
 
-* `1` if successful, `0` if the message was not found.
+* `1` if successful, `0` if the message was not found (Number).
 
 Example:
 
@@ -372,7 +372,7 @@ Parameters:
 
 Returns: 
 
-* `1` if successful, `0` if the message was not found.
+* `1` if successful, `0` if the message was not found (Number).
 
 Example:
 
