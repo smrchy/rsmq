@@ -87,7 +87,7 @@ Parameters:
 
 Returns:
 
-* `1`
+* `1` (Number)
 
 Example:
 
@@ -377,7 +377,7 @@ Returns:
 Example:
 
 ```javascript
-rsmq.createQueue({ qname: "myqueue", vt: "60", id: "dhoiwpiirm15ce77305a5c3a3b0f230c6e20f09b55" }, function (err, resp) {
+rsmq.changeMessageVisibility({ qname: "myqueue", vt: "60", id: "dhoiwpiirm15ce77305a5c3a3b0f230c6e20f09b55" }, function (err, resp) {
 	if (err) {
 		console.error(err)
 		return
