@@ -223,7 +223,7 @@ Returns an object:
 Example:
 
 ```javascript
-rsmq.sendMessage({ qname: "myqueue", vt: "30"}, function (err, resp) {
+rsmq.setQueueAttributes({ qname: "myqueue", vt: "30"}, function (err, resp) {
 	if (err) {
 		console.error(err)
 		return
