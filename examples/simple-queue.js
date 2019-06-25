@@ -33,7 +33,8 @@ main();
 function sendMessageLoop(queuename) {
 	// push a message every 2 seconds into the queue
 	setInterval(() => {
-		rsmq.sendMessage({ qname: queuename, message: `Hello World at ${new Date().toISOString()}` }, (err) => {
+		// send the messages with a random delay between 0-5 seconds
+		rsmq.sendMessage({ qname: queuename, message: `Hello World at ${new Date().toISOString()}`, delay: Math.floor(Math.random() * 6) }, (err) => {
 			if (err) {
 				console.error(err);
 				return;

@@ -133,7 +133,7 @@ Parameters:
 
 Returns:
 
-* `1`
+* `1` (Number)
 
 Example:
 
@@ -161,15 +161,15 @@ Parameters:
 
 Returns an object:
 
-* `vt`: The visibility timeout for the queue in seconds
-* `delay`: The delay for new messages in seconds
-* `maxsize`: The maximum size of a message in bytes
-* `totalrecv`: Total number of messages received from the queue
-* `totalsent`: Total number of messages sent to the queue
-* `created`: Timestamp (epoch in seconds) when the queue was created
-* `modified`: Timestamp (epoch in seconds) when the queue was last modified with `setQueueAttributes`
-* `msgs`: Current number of messages in the queue
-* `hiddenmsgs`: Current number of hidden / not visible messages. A message can be hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
+* `vt` (Number): The visibility timeout for the queue in seconds
+* `delay` (Number): The delay for new messages in seconds
+* `maxsize` (Number): The maximum size of a message in bytes
+* `totalrecv` (Number): Total number of messages received from the queue
+* `totalsent` (Number): Total number of messages sent to the queue
+* `created` (Number): Timestamp (epoch in seconds) when the queue was created
+* `modified` (Number): Timestamp (epoch in seconds) when the queue was last modified with `setQueueAttributes`
+* `msgs` (Number): Current number of messages in the queue
+* `hiddenmsgs` (Number): Current number of hidden / not visible messages. A message can be hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
 
 Example:
 
@@ -210,15 +210,15 @@ Note: At least one attribute (vt, delay, maxsize) must be supplied. Only attribu
 
 Returns an object:
 
-* `vt`: The visibility timeout for the queue in seconds
-* `delay`: The delay for new messages in seconds
-* `maxsize`: The maximum size of a message in bytes
-* `totalrecv`: Total number of messages received from the queue
-* `totalsent`: Total number of messages sent to the queue
-* `created`: Timestamp (epoch in seconds) when the queue was created
-* `modified`: Timestamp (epoch in seconds) when the queue was last modified with `setQueueAttributes`
-* `msgs`: Current number of messages in the queue
-* `hiddenmsgs`: Current number of hidden / not visible messages. A message can be hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
+* `vt` (Number): The visibility timeout for the queue in seconds
+* `delay` (Number): The delay for new messages in seconds
+* `maxsize` (Number): The maximum size of a message in bytes
+* `totalrecv` (Number): Total number of messages received from the queue
+* `totalsent` (Number): Total number of messages sent to the queue
+* `created` (Number): Timestamp (epoch in seconds) when the queue was created
+* `modified` (Number): Timestamp (epoch in seconds) when the queue was last modified with `setQueueAttributes`
+* `msgs` (Number): Current number of messages in the queue
+* `hiddenmsgs` (Number): Current number of hidden / not visible messages. A message can be hidden while "in flight" due to a `vt` parameter or when sent with a `delay`
 
 Example:
 
@@ -247,7 +247,7 @@ Parameters:
 
 Returns:
 
-* `id`: The internal message id.
+* `id` (String): The internal message id.
 
 Example:
 
@@ -272,11 +272,11 @@ Parameters:
 
 Returns an object:
 
-  * `message`: The message's contents.
-  * `id`: The internal message id.
-  * `sent`: Timestamp of when this message was sent / created.
-  * `fr`: Timestamp of when this message was first received.
-  * `rc`: Number of times this message was received.
+  * `message` (String): The message's contents.
+  * `id` (String): The internal message id.
+  * `sent` (Number): Timestamp of when this message was sent / created.
+  * `fr` (Number): Timestamp of when this message was first received.
+  * `rc` (Number): Number of times this message was received.
 
 Note: Will return an empty object if no message is there  
 
@@ -335,11 +335,11 @@ Parameters:
 
 Returns an object:
 
-  * `message`: The message's contents.
-  * `id`: The internal message id.
-  * `sent`: Timestamp of when this message was sent / created.
-  * `fr`: Timestamp of when this message was first received.
-  * `rc`: Number of times this message was received.
+  * `message` (String): The message's contents.
+  * `id` (String): The internal message id.
+  * `sent` (Number): Timestamp of when this message was sent / created.
+  * `fr` (Number): Timestamp of when this message was first received.
+  * `rc` (Number): Number of times this message was received.
 
 Note: Will return an empty object if no message is there
 
