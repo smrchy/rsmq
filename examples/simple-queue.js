@@ -13,6 +13,7 @@ function main() {
 	// create a queue
 	rsmq.createQueue({ qname: queuename }, (err) => {
 		if (err) {
+			// if the error is `queueExists` we can keep going as it tells us that the queue is already there
 			if (err.name !== "queueExists") {
 				console.error(err);
 				return;
@@ -21,7 +22,9 @@ function main() {
 			}
 		}
 
+		// start sending messages every 2 seconds
 		sendMessageLoop(queuename);
+		// start checking for messages every 500ms
 		receiveMessageLoop(queuename);
 	});
 }
@@ -65,7 +68,7 @@ function receiveMessageLoop(queuename) {
 					console.log("deleted message with id", resp.id);
 				});
 			} else {
-				console.log("no available message in queue..")
+				console.log("no available message in queue..");
 			}
 		});
 	}, 500);
