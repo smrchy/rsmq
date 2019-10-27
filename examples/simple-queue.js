@@ -72,5 +72,5 @@ function receiveMessageLoop(queuename) {
 				console.log("no available message in queue..");
 			}
 		});
-	}, 500);
+	}, 2500);
 }
