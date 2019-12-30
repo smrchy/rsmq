@@ -40,8 +40,8 @@ declare class RedisSMQ {
 	setQueueAttributes(opts: RedisSMQ.SetQueueAttributesOptions, cb: RedisSMQ.Callback<RedisSMQ.QueueAttributes>): void;
 	setQueueAttributesAsync(opts: RedisSMQ.SetQueueAttributesOptions): Promise<RedisSMQ.QueueAttributes>;
 
-	sendMessage(opts: RedisSMQ.SendMessageOptions, cb: RedisSMQ.Callback<number>): void;
-	sendMessageAsync(opts: RedisSMQ.SendMessageOptions): Promise<number>;
+	sendMessage(opts: RedisSMQ.SendMessageOptions, cb: RedisSMQ.Callback<string>): void;
+	sendMessageAsync(opts: RedisSMQ.SendMessageOptions): Promise<string>;
 	receiveMessage(opts: RedisSMQ.ReceiveMessageOptions, cb: RedisSMQ.Callback<RedisSMQ.QueueMessage|{}>): void;
 	receiveMessageAsync(opts: RedisSMQ.ReceiveMessageOptions): Promise<RedisSMQ.QueueMessage|{}>;
 	popMessage(opts: RedisSMQ.PopMessageOptions, cb: RedisSMQ.Callback<RedisSMQ.QueueMessage|{}>): void;
