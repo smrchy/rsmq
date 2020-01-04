@@ -29,6 +29,7 @@ class RedisSMQ extends EventEmitter {
                 ["time"]
             ];
             this.redis.multi(mc).exec((err, resp) => {
+                resp = this._ioRedisMultiToRedisMulti(resp);
                 if (err) {
                     this._handleError(cb, err);
                     return;
@@ -98,6 +99,7 @@ class RedisSMQ extends EventEmitter {
                     ["hsetnx", key, "modified", resp[0]],
                 ];
                 this.redis.multi(mc).exec((err, resp) => {
+                    resp = this._ioRedisMultiToRedisMulti(resp);
                     if (err) {
                         this._handleError(cb, err);
                         return;
@@ -125,6 +127,7 @@ class RedisSMQ extends EventEmitter {
                 ["hdel", `${key}:Q`, `${options.id}`, `${options.id}:rc`, `${options.id}:fr`]
             ];
             this.redis.multi(mc).exec((err, resp) => {
+                resp = this._ioRedisMultiToRedisMulti(resp);
                 if (err) {
                     this._handleError(cb, err);
                     return;
@@ -146,6 +149,7 @@ class RedisSMQ extends EventEmitter {
                 ["srem", `${this.redisns}QUEUES`, options.qname]
             ];
             this.redis.multi(mc).exec((err, resp) => {
+                resp = this._ioRedisMultiToRedisMulti(resp);
                 if (err) {
                     this._handleError(cb, err);
                     return;
@@ -172,6 +176,7 @@ class RedisSMQ extends EventEmitter {
                     ["zcount", key, resp[0] + "000", "+inf"]
                 ];
                 this.redis.multi(mc).exec((err, resp) => {
+                    resp = this._ioRedisMultiToRedisMulti(resp);
                     if (err) {
                         this._handleError(cb, err);
                         return;
@@ -362,6 +367,7 @@ class RedisSMQ extends EventEmitter {
                     mc.push(["zcard", key]);
                 }
                 this.redis.multi(mc).exec((err, resp) => {
+                    resp = this._ioRedisMultiToRedisMulti(resp);
                     if (err) {
                         this._handleError(cb, err);
                         return;
@@ -513,13 +519,24 @@ class RedisSMQ extends EventEmitter {
         opts.options.port = opts.port;
         this.realtime = opts.realtime;
         this.redisns = opts.ns + ":";
-        if (opts.client && options.client.constructor.name === "RedisClient") {
-            this.redis = opts.client;
+        if (opts.client) {
+            if (opts.client.constructor.name === "Redis") {
+                this.redis = opts.client;
+                this.isIoRedis = true;
+            }
+            else if (opts.client.constructor.name === "RedisClient") {
+                this.redis = opts.client;
+            }
         }
         else {
             this.redis = RedisInst.createClient(opts);
         }
-        this.connected = this.redis.connected || false;
+        if (this.isIoRedis) {
+            this.connected = this.redis.status === 'ready';
+        }
+        else {
+            this.connected = this.redis.connected || false;
+        }
         if (this.connected) {
             this.emit("connect");
             this.initScript();
@@ -540,6 +557,19 @@ class RedisSMQ extends EventEmitter {
             }
         });
         this._initErrors();
+    }
+    _ioRedisMultiToRedisMulti(multiResult) {
+        if (this.isIoRedis) {
+            return multiResult.map((r) => {
+                const err = r[0];
+                const val = r[1];
+                if (err) {
+                    throw err;
+                }
+                return val;
+            });
+        }
+        return multiResult;
     }
     _formatZeroPad(num, count) {
         return ((Math.pow(10, count) + num) + "").substr(1);

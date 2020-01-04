@@ -60,14 +60,24 @@ class RedisSMQ extends EventEmitter {
 		this.realtime = opts.realtime;
 		this.redisns = opts.ns + ":";
 
-		if (opts.client && options.client.constructor.name === "RedisClient") {
-			this.redis = opts.client
+		if (opts.client) {
+			if (opts.client.constructor.name === "Redis") {
+				this.redis = opts.client
+				this.isIoRedis = true
+			} else if (opts.client.constructor.name === "RedisClient") {
+				this.redis = opts.client
+			}
 		}
 		else {
 			this.redis = RedisInst.createClient(opts)
 		}
 
-		this.connected = this.redis.connected || false;
+		if (this.isIoRedis) {
+			this.connected = this.redis.status === 'ready';
+		}
+		else {
+			this.connected = this.redis.connected || false;
+		}
 
 		// If external client is used it might alrdy be connected. So we check here:
 		if (this.connected) {
@@ -122,6 +132,7 @@ class RedisSMQ extends EventEmitter {
 			["time"]
 		];
 		this.redis.multi(mc).exec( (err, resp) => {
+			resp = this._ioRedisMultiToRedisMulti(resp)
 			if (err) { this._handleError(cb, err); return; }
 			if (resp[0][0] === null || resp[0][1] === null || resp[0][2] === null) {
 				this._handleError(cb, "queueNotFound");
@@ -129,7 +140,7 @@ class RedisSMQ extends EventEmitter {
 			}
 			// Make sure to always have correct 6digit millionth seconds from redis
 			const ms: any = this._formatZeroPad(Number(resp[1][1]), 6);
-			//  Create the epoch time in ms from the redis timestamp
+			//	Create the epoch time in ms from the redis timestamp
 			const ts = Number(resp[1][0] + ms.toString(10).slice(0, 3));
 
 			const q: any = {
@@ -207,6 +218,7 @@ class RedisSMQ extends EventEmitter {
 			];
 
 			this.redis.multi(mc).exec( (err, resp) => {
+				resp = this._ioRedisMultiToRedisMulti(resp)
 				if (err) {
 					this._handleError(cb, err);
 					return
@@ -238,6 +250,7 @@ class RedisSMQ extends EventEmitter {
 		];
 
 		this.redis.multi(mc).exec( (err, resp) => {
+			resp = this._ioRedisMultiToRedisMulti(resp)
 			if (err) { this._handleError(cb, err); return; }
 			if (resp[0] === 1 && resp[1] > 0) {
 				cb(null, 1)
@@ -259,6 +272,7 @@ class RedisSMQ extends EventEmitter {
 		];
 
 		this.redis.multi(mc).exec( (err,resp) => {
+			resp = this._ioRedisMultiToRedisMulti(resp)
 			if (err) { this._handleError(cb, err); return; }
 			if (resp[0] === 0) {
 				this._handleError(cb, "queueNotFound");
@@ -285,6 +299,7 @@ class RedisSMQ extends EventEmitter {
 				["zcount", key, resp[0] + "000", "+inf"]
 			];
 			this.redis.multi(mc).exec( (err, resp) => {
+				resp = this._ioRedisMultiToRedisMulti(resp)
 				if (err) {
 					this._handleError(cb, err);
 					return;
@@ -530,6 +545,7 @@ class RedisSMQ extends EventEmitter {
 				mc.push(["zcard", key]);
 			}
 			this.redis.multi(mc).exec( (err, resp) => {
+				resp = this._ioRedisMultiToRedisMulti(resp)
 				if (err) {
 					this._handleError(cb, err);
 					return;
@@ -586,9 +602,26 @@ class RedisSMQ extends EventEmitter {
 	}
 
 	// Helpers
+	
+	private _ioRedisMultiToRedisMulti (multiResult) {
+		if (this.isIoRedis) {
+			return multiResult.map((r) => { 
+				const err = r[0]
+				const val = r[1]
+				if (err) {
+					throw err
+				}
+				return val
+			})
+		}
+		return multiResult
+	}
+
+
 	private _formatZeroPad (num, count) {
 		return ((Math.pow(10, count) + num) + "").substr(1);
 	}
+	
 
 	private _handleError = (cb, err, data = {}) => {
 		// try to create a error Object with humanized message
