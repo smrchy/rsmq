@@ -46,6 +46,7 @@ To keep the core of *RSMQ* small additional functionality is available as module
 
 The simplicity of RSMQ is useful in other languages. Here is a list of implementations in other languages:
 
+* [**Rust**](https://github.com/Couragium/rsmq-async-rs) RSMQ Async for Rust. See [#107](https://github.com/smrchy/rsmq/issues/107)
 * [**Java**](https://github.com/igr/jrsmq) RSMQ for Java. See [#48](https://github.com/smrchy/rsmq/issues/48)
 * [**PHP**](https://github.com/michsindelar/PhpRSMQ) RSMQ for PHP (work in progress)
 

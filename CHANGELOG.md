@@ -1,5 +1,11 @@
 # CHANGELOG for rsmq
 
+## 0.12.0
+
+* Removed Travis tests for Node 6
+* Updated dependencies
+* Added README for RSMQ Rust port. Thanks @DavidBM. (#107)
+
 ## 0.11.0
 
 * Refactored all code from coffeescript to typescript.
