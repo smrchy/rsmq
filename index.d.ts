@@ -62,6 +62,7 @@ declare namespace RedisSMQ {
 		ns?: string;
 		options?: ClientOpts;
 		client?: RedisClient;
+		password?: string;
 	}
 
 	interface BaseOptions {
