@@ -276,13 +276,18 @@ class RedisSMQ extends EventEmitter {
 		this.redis.time( (err, resp) => {
 			if (err) { this._handleError(cb, err); return; }
 
+			// Make sure to always have correct 6digit millionth seconds from redis
+			const ms: any = this._formatZeroPad(Number(resp[1]), 6);
+			//  Create the epoch time in ms from the redis timestamp
+			const ts = Number(resp[0] + ms.toString(10).slice(0, 3));
+
 			// Get basic attributes and counter
 			// Get total number of messages
 			// Get total number of messages in flight (not visible yet)
 			const mc = [
 				["hmget", `${key}:Q`, "vt", "delay", "maxsize", "totalrecv", "totalsent", "created", "modified"],
 				["zcard", key],
-				["zcount", key, resp[0] + "000", "+inf"]
+				["zcount", key, ts + 1, "+inf"]
 			];
 			this.redis.multi(mc).exec( (err, resp) => {
 				if (err) {
@@ -646,7 +651,12 @@ class RedisSMQ extends EventEmitter {
 					break;
 				case "vt":
 				case "delay":
+					// Allow float values and increase precision to milliseconds
+					o[item] = parseFloat(o[item]) * 1000;
+					// Remove any excessive decimal information
 					o[item] = parseInt(o[item],10);
+					// Reduce value back to seconds with correct decimal information
+					o[item] = o[item] / 1000;
 					if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 0 || o[item] > 9999999) {
 						this._handleError(cb, "invalidValue", {item: item, min: 0, max: 9999999});
 						return false;
