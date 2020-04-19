@@ -23,6 +23,8 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		name: "test3promises"
 		m1: "Hello"
 		m2: "World"
+	queue4 =
+		name: "test4precision"
 
 	q1m1 = null
 	q1m2 = null
@@ -47,6 +49,9 @@ describe 'Redis-Simple-Message-Queue Test', ->
 			return
 
 		rsmq.deleteQueue {qname: queue2.name}, (err) ->
+			return
+
+		rsmq.deleteQueue {qname: queue4.name}, (err) ->
 			return
 		@timeout(100)
 		console.log("Disconnecting Redis")
@@ -75,6 +80,9 @@ describe 'Redis-Simple-Message-Queue Test', ->
 			return
 
 		rsmq.deleteQueue {qname: queue3.name}, (err) ->
+			return
+
+		rsmq.deleteQueue {qname: queue4.name}, (err) ->
 			return
 
 		setTimeout(done, 100)
@@ -241,13 +249,31 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				return
 			return
 
-
 		it 'ListQueues: Should return array with two elements', (done) ->
 			rsmq.listQueues (err, resp) ->
 				should.not.exist(err)
 				resp.length.should.equal(2)
 				resp.should.containEql(queue1.name)
 				resp.should.containEql(queue2.name)
+				done()
+				return
+			return
+
+		it 'Create a new queue: queue4', (done) ->
+			rsmq.createQueue {qname: queue4.name, vt: 0.2}, (err, resp) ->
+				should.not.exist(err)
+				resp.should.equal(1)
+				done()
+				return
+			return
+
+		it 'ListQueues: Should return array with three elements', (done) ->
+			rsmq.listQueues (err, resp) ->
+				should.not.exist(err)
+				resp.length.should.equal(3)
+				resp.should.containEql(queue1.name)
+				resp.should.containEql(queue2.name)
+				resp.should.containEql(queue4.name)
 				done()
 				return
 			return
@@ -647,6 +673,40 @@ describe 'Redis-Simple-Message-Queue Test', ->
 					return
 				return
 			return
+
+		it 'Should send a message to queue4', (done) ->
+			rsmq.sendMessage {qname: queue4.name , delay: 0, message: 'test'}, (err, resp) ->
+				should.not.exist(err)
+				done()
+				return
+			return
+
+		it 'Should receive a message to queue4 with vt 200ms', (done) ->
+			rsmq.receiveMessage {qname: queue4.name , vt: 0.2}, (err, resp) ->
+				should.not.exist(err)
+				resp.message.should.equal('test')
+				done()
+				return
+			return
+
+		it 'getQueueAttributes: Should return the queue4 with 1 hiddenmsgs', (done) ->
+			rsmq.getQueueAttributes {qname: queue4.name}, (err, resp) ->
+				resp.hiddenmsgs.should.equal(1)
+				resp.msgs.should.equal(1)
+				done()
+				return
+			return
+
+		it 'wait 200ms', (done) -> setTimeout(done, 200)
+
+		it 'getQueueAttributes: Should return the queue4 with 0 hiddenmsgs', (done) ->
+			rsmq.getQueueAttributes {qname: queue4.name}, (err, resp) ->
+				resp.hiddenmsgs.should.equal(0)
+				resp.msgs.should.equal(1)
+				done()
+				return
+			return
+
 		return
 
 	describe 'Realtime Pub/Sub notifications', ->
