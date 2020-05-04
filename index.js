@@ -166,10 +166,12 @@ class RedisSMQ extends EventEmitter {
                     this._handleError(cb, err);
                     return;
                 }
+                const ms = this._formatZeroPad(Number(resp[1]), 6);
+                const ts = Number(resp[0] + ms.toString(10).slice(0, 3));
                 const mc = [
                     ["hmget", `${key}:Q`, "vt", "delay", "maxsize", "totalrecv", "totalsent", "created", "modified"],
                     ["zcard", key],
-                    ["zcount", key, resp[0] + "000", "+inf"]
+                    ["zcount", key, ts + 1, "+inf"]
                 ];
                 this.redis.multi(mc).exec((err, resp) => {
                     if (err) {
@@ -455,7 +457,9 @@ class RedisSMQ extends EventEmitter {
                         break;
                     case "vt":
                     case "delay":
+                        o[item] = parseFloat(o[item]) * 1000;
                         o[item] = parseInt(o[item], 10);
+                        o[item] = o[item] / 1000;
                         if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 0 || o[item] > 9999999) {
                             this._handleError(cb, "invalidValue", { item: item, min: 0, max: 9999999 });
                             return false;
