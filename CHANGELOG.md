@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.12.1
+
+* Added Travis tests for Node 14
+
 ## 0.12.0
 
 * Removed Travis tests for Node 6
