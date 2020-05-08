@@ -64,9 +64,10 @@ describe('Redis-Simple-Message-Queue Test', function() {
       qname: queue2.name
     }, function(err) {});
     this.timeout(100);
-    console.log("Disconnecting Redis");
-    rsmq.quit();
-    done();
+    rsmq.quit(function(err, resp) {
+      console.log("RSMQ quit:", resp);
+      done();
+    });
   });
   it('get a RedisSMQ instance', function(done) {
     rsmq = new RedisSMQ({

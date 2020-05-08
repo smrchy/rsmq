@@ -76,7 +76,7 @@ const rsmq = new RedisSMQ( {host: "127.0.0.1", port: 6379, ns: "rsmq"} );
 
 ### Queue
 
-#### createQueue
+#### createQueue(options, callback)
 Create a new queue.
 
 Parameters:
@@ -105,7 +105,7 @@ rsmq.createQueue({ qname: "myqueue" }, function (err, resp) {
 });
 ```
 
-#### listQueues
+#### listQueues(options, callback)
 List all queues
 
 Returns an array:
@@ -125,7 +125,7 @@ rsmq.listQueues(function (err, queues) {
 });
 ```
 
-#### deleteQueue
+#### deleteQueue(options, callback)
 Deletes a queue and all messages.
 
 Parameters:
@@ -153,7 +153,7 @@ rsmq.deleteQueue({ qname: "myqueue" }, function (err, resp) {
 });
 ```
 
-#### getQueueAttributes
+#### getQueueAttributes(options, callback)
 Get queue attributes, counter and stats
 
 Parameters:
@@ -197,7 +197,7 @@ rsmq.getQueueAttributes({ qname: "myqueue" }, function (err, resp) {
 ```
 
     
-#### setQueueAttributes
+#### setQueueAttributes(options, callback)
 Sets queue parameters.
 
 Parameters:
@@ -263,7 +263,7 @@ rsmq.sendMessage({ qname: "myqueue", message: "Hello World "}, function (err, re
 });
 ```
 
-#### receiveMessage
+#### receiveMessage(options, callback)
 Receive the next message from the queue.
 
 Parameters:
@@ -298,7 +298,7 @@ rsmq.receiveMessage({ qname: "myqueue" }, function (err, resp) {
 });
 ```
 
-#### deleteMessage
+#### deleteMessage(options, callback)
 Parameters:
 
 * `qname` (String): The Queue name.
@@ -325,7 +325,7 @@ rsmq.deleteMessage({ qname: "myqueue", id: "dhoiwpiirm15ce77305a5c3a3b0f230c6e20
 });
 ```
 
-#### popMessage
+#### popMessage(options, callback)
 Receive the next message from the queue **and delete it**.
 
 **Important:** This method deletes the message it receives right away. There is no way to receive the message again if something goes wrong while working on the message.
@@ -361,7 +361,7 @@ rsmq.popMessage({ qname: "myqueue" }, function (err, resp) {
 });
 ```
 
-#### changeMessageVisibility
+#### changeMessageVisibility(options, callback)
 Change the visibility timer of a single message.
 The time when the message will be visible again is calculated from the current time (now) + `vt`.
 
@@ -391,7 +391,7 @@ rsmq.changeMessageVisibility({ qname: "myqueue", vt: "60", id: "dhoiwpiirm15ce77
 ```
 
     
-### quit
+### quit(callback)
 Disconnect the redis client.
 This is only useful if you are using rsmq within a script and want node to be able to exit.
 

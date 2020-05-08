@@ -43,6 +43,7 @@ class RedisSMQ extends EventEmitter {
 				"receiveMessage",
 				"sendMessage",
 				"setQueueAttributes",
+				"quit"
 			], this.asyncify);
 		}
 		const opts = _.extend({
@@ -112,8 +113,11 @@ class RedisSMQ extends EventEmitter {
 	}
 
 	// kill the connection of the redis client, so your node script will be able to exit.
-	public quit = () => {
-		this.redis.quit();
+	public quit = (cb) => {
+		if (cb === undefined) {
+			cb = () => {}
+		}
+		this.redis.quit(cb);
 	}
 
 	private _getQueue = (qname, uid, cb) => {

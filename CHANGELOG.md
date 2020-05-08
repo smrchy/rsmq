@@ -1,5 +1,9 @@
 # CHANGELOG for rsmq
 
+## 0.12.2
+
+* Added callback to `quit` method (#110)
+
 ## 0.12.1
 
 * Added Travis tests for Node 14

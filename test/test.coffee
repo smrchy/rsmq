@@ -49,10 +49,10 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		rsmq.deleteQueue {qname: queue2.name}, (err) ->
 			return
 		@timeout(100)
-		console.log("Disconnecting Redis")
-		rsmq.quit()
-		done()
-
+		rsmq.quit (err, resp) ->
+			console.log("RSMQ quit:", resp)
+			done()
+			return
 		return
 
 	it 'get a RedisSMQ instance', (done) ->

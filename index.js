@@ -20,8 +20,11 @@ class RedisSMQ extends EventEmitter {
                 });
             };
         };
-        this.quit = () => {
-            this.redis.quit();
+        this.quit = (cb) => {
+            if (cb === undefined) {
+                cb = () => { };
+            }
+            this.redis.quit(cb);
         };
         this._getQueue = (qname, uid, cb) => {
             const mc = [
@@ -497,6 +500,7 @@ class RedisSMQ extends EventEmitter {
                 "receiveMessage",
                 "sendMessage",
                 "setQueueAttributes",
+                "quit"
             ], this.asyncify);
         }
         const opts = _.extend({
