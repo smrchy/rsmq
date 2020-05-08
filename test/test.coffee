@@ -81,9 +81,13 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		return
 
 	describe 'Promise Api', ->
-		it 'should create a queue', () -> rsmq.createQueueAsync({qname: queue3.name, vt: 0})
+		it 'should create a queue', () -> rsmq.createQueueAsync({qname: queue3.name, vt: 0, maxsize: -1})
 		it 'should send a message', () -> rsmq.sendMessageAsync({qname: queue3.name, message: queue3.m1})
 		it 'should send another message', () -> rsmq.sendMessageAsync({qname: queue3.name, message: queue3.m2})
+		it 'should check the maxsize of the queue', () -> rsmq.getQueueAttributesAsync({qname: queue3.name}).then((resp) ->
+				resp.maxsize.should.equal(-1)
+				return
+			)
 		it 'should receive a message', () ->
 			return rsmq.receiveMessageAsync({qname: queue3.name, vt: 2}).then((resp) ->
 				resp.message.should.equal(queue3.m1)
