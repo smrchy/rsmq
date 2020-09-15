@@ -521,7 +521,7 @@ class RedisSMQ extends EventEmitter {
             this.redis = opts.client;
         }
         else {
-            this.redis = RedisInst.createClient(opts);
+            this.redis = RedisInst.createClient(opts.options);
         }
         this.connected = this.redis.connected || false;
         if (this.connected) {
