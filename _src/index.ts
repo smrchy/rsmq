@@ -504,10 +504,11 @@ class RedisSMQ extends EventEmitter {
 		if (this._validate(options, ["qname"],cb) === false)
 			return
 
-		this._getQueue(options.qname, true, (err, q) => {
+		this._getQueue(options.qname, options["id"] == null, (err, q) => {
 			if (err) { this._handleError(cb, err); return; }
 			// Now that we got the default queue settings
 			options.delay = options.delay != null ? options.delay : q.delay;
+			options.id = options.id != null ? options.id : q.uid;
 
 			if (this._validate(options, ["delay"],cb) === false)
 				return;
@@ -525,8 +526,8 @@ class RedisSMQ extends EventEmitter {
 			// Ready to store the message
 			const key = `${this.redisns}${options.qname}`;
 			const mc = [
-				["zadd", key, q.ts + options.delay * 1000, q.uid],
-				["hset", `${key}:Q`, q.uid, options.message],
+				["zadd", key, q.ts + options.delay * 1000, options.id],
+				["hset", `${key}:Q`, options.id, options.message],
 				["hincrby", `${key}:Q`, "totalsent", 1]
 			];
 
@@ -541,7 +542,7 @@ class RedisSMQ extends EventEmitter {
 				if (this.realtime) {
 					this.redis.publish(`${this.redisns}rt:${options.qname}`, resp[3]);
 				}
-				cb(null, q.uid);
+				cb(null, options.id);
 			});
 		});
 	}
