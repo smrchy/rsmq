@@ -6,6 +6,8 @@
 * Added .NET implementation to README.md (#126)
 * Fixed index.d.ts file to #110. (#123)
 * Added rsmq-promise-native to README.md (#122)
+* Removed support for Node 8
+* Updated dependencies
 ## 0.12.2
 
 * Added callback to `quit` method (#110)
