@@ -1,5 +1,10 @@
 # CHANGELOG for rsmq
 
+
+## 0.12.3
+
+* Added .NET implementation to README.md (#126)
+* Fixed index.d.ts file to #110. (#123)
 ## 0.12.2
 
 * Added callback to `quit` method (#110)

@@ -26,9 +26,7 @@ export = RedisSMQ;
 /*~ Write your module's methods and properties in this class */
 declare class RedisSMQ {
 	constructor(options: RedisSMQ.ConstructorOptions);
-
-	quit(): void;
-
+	quit(cb: RedisSMQ.Callback<string>): void;
 	createQueue(opts: RedisSMQ.CreateQueueOptions, cb: RedisSMQ.Callback<1>): void;
 	createQueueAsync(opts: RedisSMQ.CreateQueueOptions): Promise<1>;
 	listQueues(cb: RedisSMQ.Callback<string[]>): void;
@@ -39,7 +37,6 @@ declare class RedisSMQ {
 	getQueueAttributesAsync(opts: RedisSMQ.GetQueueAttributesOptions): Promise<RedisSMQ.QueueAttributes>;
 	setQueueAttributes(opts: RedisSMQ.SetQueueAttributesOptions, cb: RedisSMQ.Callback<RedisSMQ.QueueAttributes>): void;
 	setQueueAttributesAsync(opts: RedisSMQ.SetQueueAttributesOptions): Promise<RedisSMQ.QueueAttributes>;
-
 	sendMessage(opts: RedisSMQ.SendMessageOptions, cb: RedisSMQ.Callback<string>): void;
 	sendMessageAsync(opts: RedisSMQ.SendMessageOptions): Promise<string>;
 	receiveMessage(opts: RedisSMQ.ReceiveMessageOptions, cb: RedisSMQ.Callback<RedisSMQ.QueueMessage|{}>): void;
