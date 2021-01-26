@@ -40,7 +40,8 @@ To keep the core of *RSMQ* small additional functionality is available as module
 * [**rsmq-worker**](https://github.com/mpneuried/rsmq-worker) Helper to implement a worker with RSMQ.
 * [**rest-rsmq**](https://github.com/smrchy/rest-rsmq) A RESTful interface for RSMQ.
 * [**rsmq-cli**](https://github.com/mpneuried/rsmq-cli) A command-line interface / Terminal client for RSMQ.
-* [**rsmq-promise**](https://github.com/msfidelis/rsmq-promise) Promise interface for RSMQ
+* [**rsmq-promise-native**](https://www.npmjs.com/package/rsmq-promise-native) Native promise interface for RSMQ.
+* [**rsmq-promise**](https://www.npmjs.com/package/rsmq-promise) Promise interface for RSMQ (via Bluebird).
 
 ## RSMQ in other languages
 
