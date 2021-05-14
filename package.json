@@ -15,7 +15,7 @@
   "dependencies": {
     "@types/redis": "^2.8.28",
     "lodash": "^4.17.20",
-    "redis": "^3.0.2"
+    "redis": "^3.1.2"
   },
   "devDependencies": {
     "async": "^3.2.0",
