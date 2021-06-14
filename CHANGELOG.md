@@ -1,6 +1,10 @@
 # CHANGELOG for rsmq
 
+## 0.12.4
 
+* Added Travis tests for Node 16
+* Updated dependencies
+* Removed Travis tests for Node 10
 ## 0.12.3
 
 * Added .NET implementation to README.md (#126)
