@@ -160,6 +160,16 @@ declare namespace RedisSMQ {
 		 * @memberof SendMessageOptions
 		 */
 		delay?: number;
+
+		/**
+		 * *(Default: auto-generated)*
+		 * The internal ID to use for this message.
+		 * Allowed values: 32 character strings from the alphabet `{A-Z, a-z, 0-9, :}`
+		 *
+		 * @type {string}
+		 * @memberOf SendMessageOptions
+		 */
+		id?: string;
 	}
 
 	export interface ReceiveMessageOptions extends BaseOptions {

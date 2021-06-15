@@ -440,10 +440,12 @@ describe 'Redis-Simple-Message-Queue Test', ->
 			return
 
 		it 'Send message 3', (done) ->
-			rsmq.sendMessage {qname: queue1.name, message:"Booo!!"}, (err, resp) ->
+			mid = "f64510ecd3ee4555af745fbdd551b538"
+			rsmq.sendMessage {qname: queue1.name, message:"Booo!!", id: mid}, (err, resp) ->
 				should.not.exist(err)
+				resp.should.equal(mid)
 				q1m3=
-					id: resp
+					id: mid
 					message: "Booo!!"
 				done()
 				return

@@ -247,6 +247,7 @@ Parameters:
 * `qname` (String)
 * `message` (String)
 * `delay` (Number): *optional* *(Default: queue settings)* The time in seconds that the delivery of the message will be delayed. Allowed values: 0-9999999 (around 115 days)
+* `id` (String): *optional* *(Default: auto-generated)* Must be 32 characters from the alphabet `{A-Z, a-z, 0-9, :}` 
 
 Returns:
 
