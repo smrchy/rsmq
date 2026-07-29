@@ -1,5 +1,53 @@
 # CHANGELOG for rsmq
 
+## 1.0.0 (unreleased)
+
+A TypeScript rewrite. The queue semantics, the Redis key layout, the message id format, all
+return values and all error names and messages are unchanged, so `1.x` and `0.x` processes can
+work on the same queues.
+
+**Breaking**
+
+* **`redis@6` instead of `redis@3`.** An existing client handed in via `options.client` has to be a
+  `node-redis` v4, v5 or v6 client. A `redis@3` client (or anything else that is not a client) now
+  throws `invalidClient` - *"The supplied client is not a node-redis client"* - instead of being
+  silently ignored and replaced by a new connection.
+* **`options` is a [node-redis v4+ options object](https://github.com/redis/node-redis/blob/master/docs/client-configuration.md)**
+  now. `db` is still mapped to `database` for you, but `retry_strategy`, `tls` and the other
+  `redis@3` option names have new places. `host`, `port` and `password` are unchanged.
+* **The package ships `dist/`**: `main` is `./dist/index.js`, `types` is `./dist/index.d.ts`.
+  `require("rsmq")` and `import RedisSMQ from "rsmq"` are unaffected, a deep `require("rsmq/index.js")`
+  is not.
+* The options object that is handed to a method is no longer modified. `0.x` wrote the parsed `vt`,
+  `delay`, `maxsize` and `qname` values back into it.
+* An unhandled Redis error is only written to `console.error` when no `error` listener is attached.
+  `0.x` logged it in both cases.
+
+**New**
+
+* **Every method returns a promise when the callback is omitted**: `await rsmq.sendMessage({...})`.
+  The `*Async` methods still exist and behave exactly as before.
+* The typings are generated from the source, so they cannot drift from the implementation. They still
+  work without `@types/node` or the `redis` typings in a consuming project.
+* The LUA scripts are reloaded when Redis lost them (`NOSCRIPT`, e.g. after a `SCRIPT FLUSH` or a
+  failover) and after every reconnect. A command that is issued before the connection is up waits for
+  it instead of failing.
+* `quit()` always resolves, also when the client never connected or is stuck reconnecting, so a node
+  process can always exit.
+* `connect` is emitted for an already connected client that was handed in via `options.client` - in
+  `0.x` that event fired inside the constructor where nobody could listen for it yet.
+
+**Internal**
+
+* `src/index.ts` is split into `client.ts` (the `node-redis` wrapper), `scripts.ts` (the LUA scripts),
+  `validate.ts`, `errors.ts`, `types.ts` and `emitter.ts`.
+* The tests are TypeScript on `node:test` (`test/*.test.mts`) - `mocha`, `should`, `async` and
+  `coffeescript` are gone. There are no runtime dependencies besides `redis` and no build step for
+  the tests: `npm test` builds `dist/`, type-checks everything including the shipped typings and then
+  runs the suite against a local Redis.
+* CI is back: a GitHub Actions workflow runs the suite against a Redis service container, plus a
+  smoke test of the built package on Node 20, the oldest version `engines` allows.
+
 ## 0.13.0
 
 Maintenance release for the `0.x` line. No public API changes, but two changes in behavior:

@@ -1,4 +1,4 @@
-const RedisSMQ = require("../index");
+const RedisSMQ = require("../dist/index");
 const rsmq = new RedisSMQ( {host: "127.0.0.1", port: 6379, ns: "rsmq"} );
 
 /*

@@ -1,31 +1,28 @@
 {
   "name": "rsmq",
   "description": "A really simple message queue based on Redis",
-  "version": "0.13.0",
+  "version": "1.0.0-beta.0",
   "license": "MIT",
   "author": "P. Liess <smrchy+npm@gmail.com>",
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "tsc",
-    "build:test": "coffee -c -o ./test ./test/test.coffee",
-    "watch": "tsc -w",
+    "prebuild": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "tsc -p tsconfig.build.json",
+    "watch": "tsc -p tsconfig.build.json -w",
+    "typecheck": "tsc -p tsconfig.json",
     "test:types": "tsc -p ./test/typings",
-    "pretest": "npm run build && npm run build:test && npm run test:types",
-    "test": "mocha ./test/test.js"
+    "pretest": "npm run build && npm run typecheck && npm run test:types",
+    "test": "node --test --test-concurrency=1 \"test/*.test.mts\"",
+    "prepublishOnly": "npm test"
   },
   "dependencies": {
-    "redis": "^3.1.2"
+    "redis": "^6.1.0"
   },
   "devDependencies": {
-    "@types/node": "^22.20.1",
-    "@types/redis": "^2.8.32",
-    "async": "^3.2.6",
-    "coffeescript": "^2.7.0",
-    "mocha": "^11.7.4",
-    "should": "^13.2.3",
-    "typescript": "^5.9.3"
+    "@types/node": "^24.10.1",
+    "typescript": "^7.0.2"
   },
   "keywords": [
     "queue",
@@ -36,15 +33,22 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/smrchy/rsmq.git"
+    "url": "git+https://github.com/smrchy/rsmq.git"
   },
   "bugs": {
     "url": "https://github.com/smrchy/rsmq/issues"
   },
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "homepage": "https://github.com/smrchy/rsmq#readme",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
-    "index.js",
-    "index.d.ts"
+    "dist"
   ]
 }

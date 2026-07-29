@@ -1,6 +1,0 @@
-{
-	"exit": true,
-	"bail": true,
-	"slow": 10,
-	"reporter": "spec"
-}

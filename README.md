@@ -1,12 +1,15 @@
 ![RSMQ: Redis Simple Message Queue for Node.js](https://img.webmart.de/rsmq_wide.png)
 
 # Redis Simple Message Queue
+
+[![test](https://github.com/smrchy/rsmq/actions/workflows/test.yml/badge.svg?branch=develop)](https://github.com/smrchy/rsmq/actions/workflows/test.yml)
+
 A lightweight message queue for Node.js that requires no dedicated queue server. Just a Redis server.
 
 **tl;dr:** If you run a Redis server and currently use Amazon SQS or a similar message queue you might as well use this fast little replacement. Using a shared Redis server multiple Node.js processes can send / receive messages.
 
 ## Features
-* Lightweight: **Just Redis** and ~500 lines of javascript. `redis` is the only dependency.
+* Lightweight: **Just Redis**. [`redis`](https://github.com/redis/node-redis) is the only dependency.
 * Speed: Send/receive 10000+ messages per second on an average machine. It's **just Redis**.
 * Guaranteed **delivery of a message to exactly one recipient** within a messages visibility timeout.
 * Received messages that are not deleted will reappear after the visibility timeout.
@@ -14,8 +17,8 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 * A message is deleted by the message id. The message id is returned by the `sendMessage` and `receiveMessage` method.
 * Messages stay in the queue unless deleted.
 * Optional RESTful interface via [rest-rsmq](https://github.com/smrchy/rest-rsmq)
-* Typescript Typings ❤️
-* Optional Promise-based API (only if `Promise` is defined), just suffix your method with `Async`, eg: `sendMessage` -> `sendMessageAsync`, all queue methods are supported
+* Written in TypeScript, typings included ❤️
+* **Promises and callbacks**: every method returns a promise when you leave the callback out. The `*Async` methods of `0.x` still work.
 
 **Note:** RSMQ uses the Redis EVAL command (LUA scripts) so the minimum Redis version is 2.6+. The minimum supported Node.js version is 20.
 
@@ -30,6 +33,45 @@ A lightweight message queue for Node.js that requires no dedicated queue server.
 
 ## Installation
 `npm install rsmq`
+
+## Promises or callbacks - your choice
+
+Every method takes an optional node style callback. Leave it out and you get a promise:
+
+```javascript
+const RedisSMQ = require("rsmq");
+const rsmq = new RedisSMQ({ host: "127.0.0.1", port: 6379, ns: "rsmq" });
+
+// promise
+const id = await rsmq.sendMessage({ qname: "myqueue", message: "Hello World" });
+
+// callback
+rsmq.sendMessage({ qname: "myqueue", message: "Hello World" }, (err, id) => { /* ... */ });
+
+// the 0.x promise API is still there
+const id2 = await rsmq.sendMessageAsync({ qname: "myqueue", message: "Hello World" });
+```
+
+## Migrating from 0.x to 1.x
+
+`1.0.0` is a TypeScript rewrite. Queue names, message ids, the Redis keys and all
+return values are unchanged, so a `1.x` process and a `0.x` process can work on the
+same queues. Two things need attention:
+
+* **`redis@6` instead of `redis@3`.** If you pass your own client via `options.client`
+  it has to be a `node-redis` v4, v5 or v6 client. A `redis@3` client is rejected with
+  an error instead of being silently ignored.
+* **`options` is a [node-redis v4+ options object](https://github.com/redis/node-redis/blob/master/docs/client-configuration.md)** now.
+  Most keys are named differently than in `redis@3`: `db` is `database` (this one is
+  still mapped for you), `retry_strategy` is `socket.reconnectStrategy`, `tls` is
+  `socket.tls` and so on. `host`, `port` and `password` on the RSMQ options are
+  unchanged and still work.
+
+Everything else - `createQueue`, `sendMessage`, `receiveMessage`, `popMessage`,
+`deleteMessage`, `changeMessageVisibility`, `getQueueAttributes`,
+`setQueueAttributes`, `listQueues`, `deleteQueue`, `quit`, the `*Async` variants, the
+`connect` / `disconnect` / `error` events and every error message - works like it did
+in `0.x`.
 
 ## Modules for RSMQ
 To keep the core of *RSMQ* small additional functionality is available as modules:
@@ -60,8 +102,8 @@ Parameters:
 
 * `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 * `port` (Number): *optional (Default: 6379)* The Redis port
-* `options` (Object): *optional (Default: {})* The [Redis options](https://github.com/redis/node-redis/tree/v3.1.2#options-object-properties) object. It is passed on to `redis.createClient`, so options like `db`, `tls` or `retry_strategy` can be set here.
-* `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
+* `options` (Object): *optional (Default: {})* The [node-redis client options](https://github.com/redis/node-redis/blob/master/docs/client-configuration.md). It is passed on to `redis.createClient`, so options like `database`, `socket.tls` or `socket.reconnectStrategy` can be set here.
+* `client` (RedisClient): *optional* An existing `node-redis` (v4 or newer) client instance. `host`, `port`, `password` and `options` will be ignored.
 * `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by RSMQ
 * `realtime` (Boolean): *optional (Default: false)* Enable realtime PUBLISH of new messages (see the [Realtime section](#realtime))
 * `password` (String): *optional (Default: null)* If your Redis server requires a password supply it here
@@ -104,7 +146,7 @@ rsmq.createQueue({ qname: "myqueue" }, function (err, resp) {
 });
 ```
 
-#### listQueues(options, callback)
+#### listQueues(callback)
 List all queues
 
 Returns an array:
@@ -236,7 +278,7 @@ rsmq.setQueueAttributes({ qname: "myqueue", vt: "30"}, function (err, resp) {
 
 ### Messages
 
-#### sendMessage
+#### sendMessage(options, callback)
 Sends a new message.
 
 Parameters:
@@ -396,10 +438,12 @@ rsmq.changeMessageVisibility({ qname: "myqueue", vt: "60", id: "dhoiwpiirm15ce77
 Disconnect the redis client.
 This is only useful if you are using rsmq within a script and want node to be able to exit.
 
+Note: when you handed in your own client via `options.client`, `quit` closes that client too.
+
 ## Events
 An RSMQ instance is an `EventEmitter` and emits:
 
-* `connect`: The Redis connection is up. The LUA scripts are being loaded.
+* `connect`: The Redis connection is up and ready. The LUA scripts are being loaded.
 * `disconnect`: The Redis connection was refused or lost (`ECONNREFUSED`).
 * `error`: Any other error of the Redis client. The error object is passed to the listener. Without a listener the error is only written to `console.error` and RSMQ will *not* throw.
 
@@ -410,7 +454,7 @@ rsmq.on("error", function (err) {
 ```
 
 ## Realtime
-When [initializing](#initialize) RSMQ you can enable the realtime PUBLISH for new messages. On every new message that gets sent to RSQM via `sendMessage` a Redis PUBLISH will be issued to `{rsmq.ns}:rt:{qname}`.
+When [creating](#constructor) an RSMQ instance you can enable the realtime PUBLISH for new messages. On every new message that gets sent to RSQM via `sendMessage` a Redis PUBLISH will be issued to `{rsmq.ns}:rt:{qname}`.
 
 Example for RSMQ with default settings:
 

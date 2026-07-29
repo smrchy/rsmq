@@ -1,18 +1,16 @@
 {
-  "compilerOptions": {
-      "module": "commonjs",
-      "noImplicitAny": false,
-      "target": "es6",
-      "removeComments": true,
-      "preserveConstEnums": true,
-      "sourceMap": false,
-      "skipLibCheck": true,
-      "outDir": "./"
-  },
-  "include": [
-      "_src/*.ts"
-  ],
-  "exclude": [
-      "node_modules"
-]
+	"compilerOptions": {
+		"target": "es2022",
+		"lib": ["es2022"],
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
+		"noEmit": true,
+		"strict": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"types": ["node"]
+	},
+	"include": ["src/**/*.ts", "test/**/*.mts"],
+	"exclude": ["test/typings"]
 }

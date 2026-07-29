@@ -1,0 +1,89 @@
+name: test
+
+on:
+  push:
+    branches: [develop, "1.x"]
+  pull_request:
+    branches: [develop, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Builds dist/, type-checks src, the tests and the shipped typings,
+      # then runs the suite against the Redis service above.
+      # Nothing must listen on port 6399 - the suite tests a refused connection.
+      - run: npm test
+
+      - run: npm audit --omit=dev
+
+  # The package supports Node >= 20, but the test suite itself needs >= 22.6
+  # (it is TypeScript that node runs directly). So the oldest supported Node is
+  # checked against the built package instead.
+  minimum-node:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: send and receive a message on the oldest supported node
+        run: |
+          node -e '
+            const RedisSMQ = require("./dist/index.js");
+            const rsmq = new RedisSMQ({ ns: "rsmqci" });
+            const qname = "minimumnode";
+            (async () => {
+              await rsmq.deleteQueue({ qname }).catch(() => {});
+              await rsmq.createQueue({ qname });
+              const id = await rsmq.sendMessage({ qname, message: "Hello from node " + process.version });
+              const message = await rsmq.receiveMessage({ qname });
+              if (message.id !== id) { throw new Error("expected " + id + ", got " + JSON.stringify(message)); }
+              await rsmq.deleteQueue({ qname });
+              await rsmq.quit();
+              console.log("ok on " + process.version);
+            })().catch((err) => { console.error(err); process.exit(1); });
+          '
