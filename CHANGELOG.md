@@ -1,5 +1,35 @@
 # CHANGELOG for rsmq
 
+## 0.13.0
+
+Maintenance release for the `0.x` line. No public API changes, but two changes in behavior:
+the message size limit is now enforced in bytes and Node.js >= 20 is required.
+
+* **Removed the `lodash` dependency.** `redis` is now the only runtime dependency. This also removes the
+  `_.template` code injection advisory ([GHSA-r5fr-rjxr-66jc](https://github.com/advisories/GHSA-r5fr-rjxr-66jc))
+  from the dependency tree.
+* **`maxsize` is now checked in bytes** (`Buffer.byteLength`) instead of characters, as documented.
+  Messages with multi-byte characters (Umlauts, emoji, CJK, ...) that were slightly over the limit
+  in bytes were accepted before and are now rejected with `Message too long`.
+* **Fixed the Redis error check** that was missing a comparison to `-1`: every error that was *not*
+  a connection refusal was treated as a disconnect and silently swallowed. Non-connection errors are
+  now logged and emitted as an `error` event - but only when an `error` listener is attached, so an
+  unhandled event cannot take the process down. `ECONNREFUSED` is now also detected via `err.code`.
+* **The documented `options` object is passed on to `redis.createClient` again.** It was assembled
+  and then dropped, so options like `retry_strategy`, `db` or `tls` had no effect. Options at the top
+  level of the constructor keep working as before.
+* An existing `client` is now also accepted when it is a subclass of the node_redis client
+  (`instanceof RedisClient`) and no longer silently replaced by a new connection.
+* `index.d.ts` no longer imports from `redis`, so `@types/redis` is not needed to consume the typings.
+  Added `quitAsync`, the event listener signatures (`connect`, `disconnect`, `error`), and made the
+  constructor options and the `quit` callback optional.
+* **Node.js >= 20 is required** (`engines`). Older versions are end of life and are no longer tested.
+  The code itself is unchanged ES6 and still runs on older Node versions, but they are unsupported.
+* Removed the Travis config and the dead Travis / david-dm badges from the README.
+* Updated dev dependencies (mocha 11, TypeScript 5), removed the unused `ts-loader`,
+  replaced `test/mocha.opts` with `.mocharc.json` and added a typings compile check
+  (`npm run test:types`). `npm test` now rebuilds `index.js` and the tests first.
+
 ## 0.12.4
 
 * Added Travis tests for Node 16

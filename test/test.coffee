@@ -1,4 +1,3 @@
-_ = require "lodash"
 should = require "should"
 async = require "async"
 RedisSMQ = require "../index"
@@ -23,6 +22,8 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		name: "test3promises"
 		m1: "Hello"
 		m2: "World"
+	queue4 =
+		name: "test4unicode"
 
 	q1m1 = null
 	q1m2 = null
@@ -400,7 +401,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 				for e in resp
 					q2msgs[e] = 1
 					e.length.should.equal(32)
-				_.keys(q2msgs).length.should.equal(1000)
+				Object.keys(q2msgs).length.should.equal(1000)
 				done()
 				return
 			return
@@ -607,7 +608,7 @@ describe 'Redis-Simple-Message-Queue Test', ->
 					done()
 
 					# q2msgs should be empty
-					_.keys(q2msgs).length.should.equal(0)
+					Object.keys(q2msgs).length.should.equal(0)
 					return
 				return
 			return
@@ -680,6 +681,81 @@ describe 'Redis-Simple-Message-Queue Test', ->
 		it 'check queue1 length. Should be 3', (done) ->
 			Q1LENGTH.should.equal(3)
 			done()
+			return
+		return
+
+	describe 'Message size is measured in bytes', ->
+		# 500 * "€" = 500 characters but 1500 bytes
+		too_long = new Array(501).join("€")
+		# 300 * "€" = 300 characters and 900 bytes
+		fits = new Array(301).join("€")
+
+		it 'Create a new queue: queue4 with a maxsize of 1024', (done) ->
+			rsmq.createQueue {qname: queue4.name, maxsize: 1024}, (err, resp) ->
+				should.not.exist(err)
+				resp.should.equal(1)
+				done()
+				return
+			return
+
+		it 'Should fail: Send a multi-byte message that is too long in bytes', (done) ->
+			too_long.length.should.equal(500)
+			Buffer.byteLength(too_long, "utf8").should.equal(1500)
+			rsmq.sendMessage {qname: queue4.name, message: too_long}, (err, resp) ->
+				should.not.exist(resp)
+				err.message.should.equal("Message too long")
+				done()
+				return
+			return
+
+		it 'Send/Receive a multi-byte message that fits into maxsize', (done) ->
+			Buffer.byteLength(fits, "utf8").should.equal(900)
+			rsmq.sendMessage {qname: queue4.name, message: fits}, (err, resp1) ->
+				should.not.exist(err)
+				rsmq.receiveMessage {qname: queue4.name}, (err, resp2) ->
+					should.not.exist(err)
+					resp2.id.should.equal(resp1)
+					resp2.message.should.equal(fits)
+					done()
+					return
+				return
+			return
+
+		it 'Delete queue4', (done) ->
+			rsmq.deleteQueue {qname: queue4.name}, (err, resp) ->
+				should.not.exist(err)
+				done()
+				return
+			return
+		return
+
+	describe 'Redis client options and connection errors', ->
+		it 'should pass the `options` object on to the redis client', (done) ->
+			inst = new RedisSMQ({options: {db: 2}})
+			inst.redis.options.db.should.equal(2)
+			inst.redis.selected_db.should.equal(2)
+			inst.once "connect", ->
+				# give the LUA scripts a chance to load before closing the connection
+				setTimeout ->
+					inst.quit (err, resp) ->
+						should.not.exist(err)
+						done()
+						return
+					return
+				, 20
+				return
+			return
+
+		it 'should emit `disconnect` when the connection is refused', (done) ->
+			@timeout(5000)
+			# Nothing is listening on this port
+			inst = new RedisSMQ({port: 6399})
+			inst.once "disconnect", ->
+				inst.connected.should.equal(false)
+				# stop the client from reconnecting for the rest of the test run
+				inst.redis.end(true)
+				done()
+				return
 			return
 		return
 	return

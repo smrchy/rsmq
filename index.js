@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const _ = require("lodash");
 const RedisInst = require("redis");
 const EventEmitter = require("events").EventEmitter;
+const RSMQ_OPTIONS = ["client", "ns", "realtime", "options"];
 class RedisSMQ extends EventEmitter {
     constructor(options = {}) {
         super(options);
@@ -351,7 +351,7 @@ class RedisSMQ extends EventEmitter {
                     this._handleError(cb, "messageNotString");
                     return;
                 }
-                if (q.maxsize !== -1 && options.message.length > q.maxsize) {
+                if (q.maxsize !== -1 && Buffer.byteLength(options.message, "utf8") > q.maxsize) {
                     this._handleError(cb, "messageTooLong");
                     return;
                 }
@@ -420,7 +420,7 @@ class RedisSMQ extends EventEmitter {
         };
         this._handleError = (cb, err, data = {}) => {
             let _err = null;
-            if (_.isString(err)) {
+            if (typeof err === "string") {
                 _err = new Error();
                 _err.name = err;
                 let ref = null;
@@ -434,7 +434,7 @@ class RedisSMQ extends EventEmitter {
         this._initErrors = () => {
             this._ERRORS = {};
             for (let key in this.ERRORS) {
-                this._ERRORS[key] = _.template(this.ERRORS[key]);
+                this._ERRORS[key] = this._compileTemplate(this.ERRORS[key]);
             }
         };
         this._VALID = {
@@ -459,14 +459,14 @@ class RedisSMQ extends EventEmitter {
                     case "vt":
                     case "delay":
                         o[item] = parseInt(o[item], 10);
-                        if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 0 || o[item] > 9999999) {
+                        if (Number.isNaN(o[item]) || typeof o[item] !== "number" || o[item] < 0 || o[item] > 9999999) {
                             this._handleError(cb, "invalidValue", { item: item, min: 0, max: 9999999 });
                             return false;
                         }
                         break;
                     case "maxsize":
                         o[item] = parseInt(o[item], 10);
-                        if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 1024 || o[item] > 65536) {
+                        if (Number.isNaN(o[item]) || typeof o[item] !== "number" || o[item] < 1024 || o[item] > 65536) {
                             if (o[item] !== -1) {
                                 this._handleError(cb, "invalidValue", { item: item, min: 1024, max: 65536 });
                                 return false;
@@ -489,7 +489,7 @@ class RedisSMQ extends EventEmitter {
             "queueExists": "Queue exists"
         };
         if (Promise) {
-            _.forEach([
+            const methods = [
                 "changeMessageVisibility",
                 "createQueue",
                 "deleteMessage",
@@ -501,27 +501,26 @@ class RedisSMQ extends EventEmitter {
                 "sendMessage",
                 "setQueueAttributes",
                 "quit"
-            ], this.asyncify);
+            ];
+            for (const methodKey of methods) {
+                this.asyncify(methodKey);
+            }
         }
-        const opts = _.extend({
+        const opts = Object.assign({
             host: "127.0.0.1",
             port: 6379,
-            options: {
-                password: options.password || null
-            },
+            options: {},
             client: null,
             ns: "rsmq",
             realtime: false
         }, options);
-        opts.options.host = opts.host;
-        opts.options.port = opts.port;
         this.realtime = opts.realtime;
         this.redisns = opts.ns + ":";
-        if (opts.client && options.client.constructor.name === "RedisClient") {
+        if (opts.client && this._isRedisClient(opts.client)) {
             this.redis = opts.client;
         }
         else {
-            this.redis = RedisInst.createClient(opts);
+            this.redis = RedisInst.createClient(this._clientOptions(opts));
         }
         this.connected = this.redis.connected || false;
         if (this.connected) {
@@ -534,19 +533,51 @@ class RedisSMQ extends EventEmitter {
             this.initScript();
         });
         this.redis.on("error", (err) => {
-            if (err.message.indexOf("ECONNREFUSED")) {
+            const message = (err && err.message) || "";
+            if ((err && err.code === "ECONNREFUSED") || message.indexOf("ECONNREFUSED") !== -1) {
                 this.connected = false;
                 this.emit("disconnect");
             }
             else {
                 console.error("Redis ERROR", err);
-                this.emit("error");
+                if (this.listenerCount("error") > 0) {
+                    this.emit("error", err);
+                }
             }
         });
         this._initErrors();
     }
+    _isRedisClient(client) {
+        const RedisClient = RedisInst.RedisClient;
+        if (RedisClient && client instanceof RedisClient) {
+            return true;
+        }
+        return client.constructor != null && client.constructor.name === "RedisClient";
+    }
+    _clientOptions(opts) {
+        const clientOptions = {};
+        for (const key of Object.keys(opts)) {
+            if (RSMQ_OPTIONS.indexOf(key) === -1) {
+                clientOptions[key] = opts[key];
+            }
+        }
+        Object.assign(clientOptions, opts.options);
+        clientOptions.host = opts.host;
+        clientOptions.port = opts.port;
+        if (opts.password != null && clientOptions.password == null) {
+            clientOptions.password = opts.password;
+        }
+        return clientOptions;
+    }
     _formatZeroPad(num, count) {
-        return ((Math.pow(10, count) + num) + "").substr(1);
+        return ((Math.pow(10, count) + num) + "").slice(1);
+    }
+    _compileTemplate(template) {
+        return (data = {}) => {
+            return template.replace(/<%=\s*([a-zA-Z0-9_$]+)\s*%>/g, (match, key) => {
+                return data[key] != null ? String(data[key]) : "";
+            });
+        };
     }
     _makeid(len) {
         let text = "";
