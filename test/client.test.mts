@@ -45,6 +45,29 @@ describe("Redis client options", () => {
 		rsmq.quit()
 	})
 
+	it("should work in RESP3 mode", async () => {
+		// rsmq only uses commands whose replies are the same in RESP2 and RESP3
+		const rsmq = new RedisSMQ({ ns: "testresp3", options: { RESP: 3 } })
+		const qname = "resp3"
+		await rsmq.createQueueAsync({ qname, vt: 0 })
+		const id = await rsmq.sendMessageAsync({ qname, message: "RESP3 hello" })
+
+		const message = (await rsmq.receiveMessageAsync({ qname })) as RedisSMQ.QueueMessage
+		assert.equal(message.id, id)
+		assert.equal(message.message, "RESP3 hello")
+		assert.equal(message.rc, 1)
+
+		const attributes = await rsmq.getQueueAttributesAsync({ qname })
+		assert.equal(attributes.msgs, 1)
+		assert.equal(attributes.totalsent, 1)
+		const popped = (await rsmq.popMessageAsync({ qname })) as RedisSMQ.QueueMessage
+		assert.equal(popped.id, id)
+		assert.equal(popped.rc, 2)
+
+		await rsmq.deleteQueueAsync({ qname })
+		await rsmq.quitAsync()
+	})
+
 	it("should use the `ns` option for all keys", async () => {
 		const rsmq = new RedisSMQ({ ns: "testns" })
 		assert.equal(rsmq.redisns, "testns:")
@@ -116,6 +139,30 @@ describe("LUA scripts", () => {
 		await rsmq.quitAsync()
 	})
 
+	it("should be there again after the server dropped the connection", async () => {
+		const rsmq = new RedisSMQ()
+		// a connection the server kills shows up as an `error` event
+		rsmq.on("error", () => {})
+		await rsmq.createQueueAsync({ qname: "reconnect" })
+		const id = await rsmq.sendMessageAsync({ qname: "reconnect", message: "survives a reconnect" })
+
+		const clientId = await rsmq.redis.sendCommand(["CLIENT", "ID"])
+		const reconnected = once(rsmq, "connect", 10000)
+
+		const killer = createClient()
+		await killer.connect()
+		assert.equal(Number(await killer.sendCommand(["CLIENT", "KILL", "ID", String(clientId)])), 1, "the rsmq connection was killed")
+		await killer.quit()
+
+		await reconnected
+		// the scripts are loaded again, so this still works
+		const received = (await rsmq.receiveMessageAsync({ qname: "reconnect" })) as RedisSMQ.QueueMessage
+		assert.equal(received.id, id)
+
+		await rsmq.deleteQueueAsync({ qname: "reconnect" })
+		await rsmq.quitAsync()
+	})
+
 	it("should be waited for by commands issued before the connection is up", async () => {
 		const rsmq = new RedisSMQ()
 		// No `await` on a connect event: the command has to queue up until the
@@ -153,6 +200,14 @@ describe("Connection errors", () => {
 		const rsmq = new RedisSMQ({ port: 6399 })
 		assert.equal(await rsmq.quitAsync(), "OK")
 		assert.equal(await rsmq.quitAsync(), "OK")
+	})
+
+	it("should reject a command that is issued after `quit`", async () => {
+		const rsmq = new RedisSMQ()
+		await rsmq.listQueuesAsync()
+		await rsmq.quitAsync()
+		// waiting for a connection that will never come back would hang forever
+		await assert.rejects(rsmq.listQueuesAsync(), { message: "The client is closed" })
 	})
 
 	it("should not leave a socket behind when `quit` is called while connecting", async () => {

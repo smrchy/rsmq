@@ -40,10 +40,13 @@ npm test          # pretest builds and type-checks everything, then runs the sui
    **without** `@types/node` or the `redis` typings in a consuming project.
 4. `node --test --test-concurrency=1 "test/*.test.mts"`.
 
-Expected result: **105 passing**. The suite talks to the real Redis and creates/deletes the queues
-`test1`, `test2`, `test3promises` and `test4unicode` in the `rsmq:` namespace of db 0, plus a few
-short-lived queues in `testns:`. `--test-concurrency=1` matters: the tests share Redis state and run
-in order.
+Expected result: **121 passing**. The suite talks to the real Redis and creates/deletes the queues
+`test1`, `test2`, `test3promises`, `test4unicode` and `test*` (delay, vt, once, ids) in the `rsmq:`
+namespace of db 0, plus short-lived queues in `testns:`, `testresp3:` and `testrt:`.
+`--test-concurrency=1` matters: the tests share Redis state and run in order.
+
+One test kills the rsmq connection with `CLIENT KILL` to check the reconnect, another one runs
+`SCRIPT FLUSH` - both are global on that Redis, so do not point the suite at a Redis that matters.
 
 ## Where the code lives
 
@@ -57,7 +60,9 @@ in order.
 | `src/types.ts` | The public option / result interfaces. |
 | `src/emitter.ts` | Typed `EventEmitter` facade so the typings do not need `@types/node`. |
 | `dist/` | Build output, git-ignored, shipped. Never edit - run `npm run build`. |
-| `test/*.test.mts` | The tests (`node:test`). TypeScript, run directly, no build step. |
+| `test/rsmq.test.mts` | The ported `0.x` suite: queues, messages, validation, realtime, byte sizes. |
+| `test/semantics.test.mts` | `delay`, visibility timeout, exactly-once delivery, message ids. |
+| `test/client.test.mts` | Client options, external clients, script (re)loading, connection loss, `quit`. |
 | `test/typings/` | Compile-only consumer check for the generated `dist/index.d.ts`. |
 | `_docs/redis_data_structure.md` | The Redis key layout. Keep it correct, it is the data contract. |
 | `ai/` | Rewrite plans and progress notes (git-ignored, local only). |

@@ -65,6 +65,17 @@ async function asyncApi() {
 	await rsmq.quitAsync();
 }
 
+// `receiveMessage` and `popMessage` resolve with `QueueMessage | {}`, so the result
+// has to be narrowed - this is the pattern the README documents
+async function narrowing() {
+	const message = await rsmq.receiveMessage({ qname: "myqueue" });
+	if ("id" in message) {
+		const id: string = message.id;
+		const rc: number = message.rc;
+		await rsmq.deleteMessage({ qname: "myqueue", id: id });
+	}
+}
+
 // The option and result types are reachable through the namespace
 const createOptions: RedisSMQ.CreateQueueOptions = { qname: "myqueue" };
 const sendOptions: RedisSMQ.SendMessageOptions = { qname: "myqueue", message: "Hello" };
