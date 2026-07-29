@@ -5,9 +5,8 @@ dump.rdb
 *.lock
 *.conflict
 *.DS_Store
-
 .project
 .settings
 .idea
-
+ai/
 *.sublime*
