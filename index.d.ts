@@ -1,4 +1,4 @@
-// Type definitions for rsmq 0.8.3
+// Type definitions for rsmq 0.13.0
 // Project: rsmq
 // Definitions by: erdii https://github.com/erdii
 
@@ -14,9 +14,10 @@
 *~
 *~ Refer to the documentation to understand common
 *~ workarounds for this limitation of ES6 modules.
+*~
+*~ Note: the redis typings are not referenced here on purpose, so consuming
+*~ projects do not need `@types/redis` installed to use these definitions.
 */
-
-import { ClientOpts, RedisClient } from "redis";
 
 /*~ This declaration specifies that the class constructor function
 *~ is the exported object from the file
@@ -25,8 +26,9 @@ export = RedisSMQ;
 
 /*~ Write your module's methods and properties in this class */
 declare class RedisSMQ {
-	constructor(options: RedisSMQ.ConstructorOptions);
-	quit(cb: RedisSMQ.Callback<string>): void;
+	constructor(options?: RedisSMQ.ConstructorOptions);
+	quit(cb?: RedisSMQ.Callback<string>): void;
+	quitAsync(): Promise<string>;
 	createQueue(opts: RedisSMQ.CreateQueueOptions, cb: RedisSMQ.Callback<1>): void;
 	createQueueAsync(opts: RedisSMQ.CreateQueueOptions): Promise<1>;
 	listQueues(cb: RedisSMQ.Callback<string[]>): void;
@@ -47,6 +49,16 @@ declare class RedisSMQ {
 	deleteMessageAsync(opts: RedisSMQ.DeleteMessageOptions): Promise<0|1>;
 	changeMessageVisibility(opts: RedisSMQ.ChangeMessageVisibilityOptions, cb: RedisSMQ.Callback<0|1>): void;
 	changeMessageVisibilityAsync(opts: RedisSMQ.ChangeMessageVisibilityOptions): Promise<0|1>;
+
+	/*~ RSMQ is an EventEmitter and emits `connect`, `disconnect` and `error` */
+	on(event: "connect" | "disconnect", listener: () => void): this;
+	on(event: "error", listener: (err: any) => void): this;
+	on(event: string, listener: (...args: any[]) => void): this;
+	once(event: "connect" | "disconnect", listener: () => void): this;
+	once(event: "error", listener: (err: any) => void): this;
+	once(event: string, listener: (...args: any[]) => void): this;
+	removeListener(event: string, listener: (...args: any[]) => void): this;
+	removeAllListeners(event?: string): this;
 }
 
 declare namespace RedisSMQ {
@@ -57,8 +69,15 @@ declare namespace RedisSMQ {
 		host?: string;
 		port?: number;
 		ns?: string;
-		options?: ClientOpts;
-		client?: RedisClient;
+		/**
+		 * The redis client options. Passed on to `redis.createClient`.
+		 * See https://github.com/redis/node-redis/tree/v3.1.2#options-object-properties
+		 */
+		options?: any;
+		/**
+		 * An existing node_redis client instance. `host` and `port` will be ignored.
+		 */
+		client?: any;
 		password?: string;
 	}
 

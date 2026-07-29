@@ -8,9 +8,11 @@
 A Really Simple Message Queue based on Redis
 
 */
-import * as _ from "lodash"
 import * as RedisInst from "redis"
 const EventEmitter = require("events").EventEmitter
+
+// Options that belong to rsmq itself and must not be forwarded to the redis client
+const RSMQ_OPTIONS = ["client", "ns", "realtime", "options"]
 
 /*
 To create a new instance use:
@@ -22,17 +24,20 @@ To create a new instance use:
 
 	* `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 	* `port` (Number): *optional (Default: 6379)* The Redis port
-	* `options` (Object): *optional (Default: {})* The Redis options object.
+	* `options` (Object): *optional (Default: {})* The Redis options object. Passed on to `redis.createClient`.
 	* `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
 	* `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by **rsmq**
 	* `realtime` (Boolean): *optional (Default: false)* Enable realtime PUBLISH of new messages
+	* `password` (String): *optional (Default: null)* The password of the Redis server
+
+	Emits `connect`, `disconnect` and `error`.
 */
 class RedisSMQ extends EventEmitter {
 	constructor (options: any = {}) {
 		super(options);
 		if (Promise) {
 			// create async versions of methods
-			_.forEach([
+			const methods = [
 				"changeMessageVisibility",
 				"createQueue",
 				"deleteMessage",
@@ -44,28 +49,27 @@ class RedisSMQ extends EventEmitter {
 				"sendMessage",
 				"setQueueAttributes",
 				"quit"
-			], this.asyncify);
+			];
+			for (const methodKey of methods) {
+				this.asyncify(methodKey);
+			}
 		}
-		const opts = _.extend({
+		const opts = Object.assign({
 			host: "127.0.0.1",
 			port: 6379,
-			options: {
-				password: options.password || null
-			},
+			options: {},
 			client: null,
 			ns: "rsmq",
 			realtime: false
 		}, options);
-		opts.options.host = opts.host;
-		opts.options.port = opts.port;
 		this.realtime = opts.realtime;
 		this.redisns = opts.ns + ":";
 
-		if (opts.client && options.client.constructor.name === "RedisClient") {
+		if (opts.client && this._isRedisClient(opts.client)) {
 			this.redis = opts.client
 		}
 		else {
-			this.redis = RedisInst.createClient(opts)
+			this.redis = RedisInst.createClient(this._clientOptions(opts))
 		}
 
 		this.connected = this.redis.connected || false;
@@ -83,16 +87,50 @@ class RedisSMQ extends EventEmitter {
 		});
 
 		this.redis.on("error", (err) => {
-			if (err.message.indexOf( "ECONNREFUSED" )) {
+			const message = (err && err.message) || "";
+			if ((err && err.code === "ECONNREFUSED") || message.indexOf("ECONNREFUSED") !== -1) {
 				this.connected = false;
 				this.emit("disconnect");
 			}
 			else {
 				console.error( "Redis ERROR", err )
-				this.emit( "error" )
+				// Only emit when someone is listening: an unhandled "error" event
+				// would take the whole process down.
+				if (this.listenerCount("error") > 0) {
+					this.emit("error", err)
+				}
 			}
 		});
 		this._initErrors();
+	}
+
+	// An existing client may be handed in via `options.client`.
+	// Accept anything that is a node_redis client (including subclasses).
+	private _isRedisClient (client) {
+		const RedisClient = (RedisInst as any).RedisClient;
+		if (RedisClient && client instanceof RedisClient) {
+			return true;
+		}
+		return client.constructor != null && client.constructor.name === "RedisClient";
+	}
+
+	// Build the options for `redis.createClient`.
+	// Everything that is not an rsmq option is passed through - both from the top level
+	// (as in previous versions) and from the documented `options` object.
+	private _clientOptions (opts) {
+		const clientOptions: any = {};
+		for (const key of Object.keys(opts)) {
+			if (RSMQ_OPTIONS.indexOf(key) === -1) {
+				clientOptions[key] = opts[key];
+			}
+		}
+		Object.assign(clientOptions, opts.options);
+		clientOptions.host = opts.host;
+		clientOptions.port = opts.port;
+		if (opts.password != null && clientOptions.password == null) {
+			clientOptions.password = opts.password;
+		}
+		return clientOptions;
 	}
 
 	// helper to create async versions of our public methods (ie. methods that return promises)
@@ -517,8 +555,8 @@ class RedisSMQ extends EventEmitter {
 				this._handleError(cb, "messageNotString");
 				return;
 			}
-			// Check the message size
-			if (q.maxsize !== -1 && options.message.length > q.maxsize) {
+			// Check the message size in bytes (maxsize is documented as bytes)
+			if (q.maxsize !== -1 && Buffer.byteLength(options.message, "utf8") > q.maxsize) {
 				this._handleError(cb, "messageTooLong");
 				return;
 			}
@@ -591,13 +629,13 @@ class RedisSMQ extends EventEmitter {
 
 	// Helpers
 	private _formatZeroPad (num, count) {
-		return ((Math.pow(10, count) + num) + "").substr(1);
+		return ((Math.pow(10, count) + num) + "").slice(1);
 	}
 
 	private _handleError = (cb, err, data = {}) => {
 		// try to create a error Object with humanized message
 		let _err = null;
-		if (_.isString(err)) {
+		if (typeof err === "string") {
 			_err = new Error();
 			_err.name = err;
 
@@ -611,10 +649,20 @@ class RedisSMQ extends EventEmitter {
 		cb(_err)
 	}
 
+	// Compile a `<%= key %>` message template into a function.
+	// Replaces the lodash `_.template` that was used until 0.12.x.
+	private _compileTemplate (template) {
+		return (data = {}) => {
+			return template.replace(/<%=\s*([a-zA-Z0-9_$]+)\s*%>/g, (match, key) => {
+				return data[key] != null ? String(data[key]) : "";
+			});
+		}
+	}
+
 	private _initErrors = () => {
 		this._ERRORS = {};
 		for (let key in this.ERRORS) {
-			this._ERRORS[key] = _.template(this.ERRORS[key]);
+			this._ERRORS[key] = this._compileTemplate(this.ERRORS[key]);
 		}
 	}
 
@@ -651,14 +699,14 @@ class RedisSMQ extends EventEmitter {
 				case "vt":
 				case "delay":
 					o[item] = parseInt(o[item],10);
-					if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 0 || o[item] > 9999999) {
+					if (Number.isNaN(o[item]) || typeof o[item] !== "number" || o[item] < 0 || o[item] > 9999999) {
 						this._handleError(cb, "invalidValue", {item: item, min: 0, max: 9999999});
 						return false;
 					}
 					break;
 				case "maxsize":
 					o[item] = parseInt(o[item], 10)
-					if (_.isNaN(o[item]) || !_.isNumber(o[item]) || o[item] < 1024 || o[item] > 65536) {
+					if (Number.isNaN(o[item]) || typeof o[item] !== "number" || o[item] < 1024 || o[item] > 65536) {
 						// Allow unlimited messages
 						if (o[item] !== -1) {
 							this._handleError(cb, "invalidValue", {item: item, min: 1024, max: 65536});

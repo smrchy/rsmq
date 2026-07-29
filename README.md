@@ -3,24 +3,21 @@
 # Redis Simple Message Queue
 A lightweight message queue for Node.js that requires no dedicated queue server. Just a Redis server.
 
-[![Build Status](https://secure.travis-ci.org/smrchy/rsmq.png?branch=master)](http://travis-ci.org/smrchy/rsmq)
-[![Dependency Status](https://david-dm.org/smrchy/rsmq.svg)](https://david-dm.org/smrchy/rsmq)
-
 **tl;dr:** If you run a Redis server and currently use Amazon SQS or a similar message queue you might as well use this fast little replacement. Using a shared Redis server multiple Node.js processes can send / receive messages.
 
 ## Features
-* Lightweight: **Just Redis** and ~500 lines of javascript.
+* Lightweight: **Just Redis** and ~500 lines of javascript. `redis` is the only dependency.
 * Speed: Send/receive 10000+ messages per second on an average machine. It's **just Redis**.
 * Guaranteed **delivery of a message to exactly one recipient** within a messages visibility timeout.
 * Received messages that are not deleted will reappear after the visibility timeout.
-* [Test coverage](http://travis-ci.org/smrchy/rsmq)
+* Test coverage: see the `test` folder.
 * A message is deleted by the message id. The message id is returned by the `sendMessage` and `receiveMessage` method.
 * Messages stay in the queue unless deleted.
 * Optional RESTful interface via [rest-rsmq](https://github.com/smrchy/rest-rsmq)
 * Typescript Typings ❤️
 * Optional Promise-based API (only if `Promise` is defined), just suffix your method with `Async`, eg: `sendMessage` -> `sendMessageAsync`, all queue methods are supported
 
-**Note:** RSMQ uses the Redis EVAL command (LUA scripts) so the minimum Redis version is 2.6+. 
+**Note:** RSMQ uses the Redis EVAL command (LUA scripts) so the minimum Redis version is 2.6+. The minimum supported Node.js version is 20.
 
 ## Usage
 * After creating a queue you can send messages to that queue.
@@ -63,7 +60,7 @@ Parameters:
 
 * `host` (String): *optional (Default: "127.0.0.1")* The Redis server
 * `port` (Number): *optional (Default: 6379)* The Redis port
-* `options` (Object): *optional (Default: {})* The [Redis options](https://github.com/NodeRedis/node_redis#options-object-properties) object. 
+* `options` (Object): *optional (Default: {})* The [Redis options](https://github.com/redis/node-redis/tree/v3.1.2#options-object-properties) object. It is passed on to `redis.createClient`, so options like `db`, `tls` or `retry_strategy` can be set here.
 * `client` (RedisClient): *optional* A existing redis client instance. `host` and `server` will be ignored.
 * `ns` (String): *optional (Default: "rsmq")* The namespace prefix used for all keys created by RSMQ
 * `realtime` (Boolean): *optional (Default: false)* Enable realtime PUBLISH of new messages (see the [Realtime section](#realtime))
@@ -248,6 +245,8 @@ Parameters:
 * `message` (String)
 * `delay` (Number): *optional* *(Default: queue settings)* The time in seconds that the delivery of the message will be delayed. Allowed values: 0-9999999 (around 115 days)
 
+**Note:** The message length is checked against the `maxsize` of the queue in **bytes** (UTF-8), not in characters. A message of 40000 Emoji characters is 160000 bytes long and will be rejected by a queue with the default `maxsize` of 65536.
+
 Returns:
 
 * `id` (String): The internal message id.
@@ -396,6 +395,19 @@ rsmq.changeMessageVisibility({ qname: "myqueue", vt: "60", id: "dhoiwpiirm15ce77
 ### quit(callback)
 Disconnect the redis client.
 This is only useful if you are using rsmq within a script and want node to be able to exit.
+
+## Events
+An RSMQ instance is an `EventEmitter` and emits:
+
+* `connect`: The Redis connection is up. The LUA scripts are being loaded.
+* `disconnect`: The Redis connection was refused or lost (`ECONNREFUSED`).
+* `error`: Any other error of the Redis client. The error object is passed to the listener. Without a listener the error is only written to `console.error` and RSMQ will *not* throw.
+
+```javascript
+rsmq.on("error", function (err) {
+	console.error("RSMQ error", err);
+});
+```
 
 ## Realtime
 When [initializing](#initialize) RSMQ you can enable the realtime PUBLISH for new messages. On every new message that gets sent to RSQM via `sendMessage` a Redis PUBLISH will be issued to `{rsmq.ns}:rt:{qname}`.

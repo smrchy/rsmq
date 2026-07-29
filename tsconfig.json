@@ -6,7 +6,7 @@
       "removeComments": true,
       "preserveConstEnums": true,
       "sourceMap": false,
-      "watch": false,
+      "skipLibCheck": true,
       "outDir": "./"
   },
   "include": [
